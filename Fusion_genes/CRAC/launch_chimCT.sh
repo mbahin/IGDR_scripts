@@ -60,16 +60,6 @@ fi
 #chimCT -g $gff3_withID -s $sam -n LUPA11_chimCT_test --primers --summary summary.txt --spanning-reads spanR
 #chimCT -g $gff3_withID -s $sam -n LUPA11_chimCT_test --summary summary.txt --spanning-reads spanR
 #chimCT -s $sam -n LUPA11_chimCT_test --keep-ig --summary summary.txt --spanning-reads spanR
-log=file.log
-echo -e "----- Inputs -----\n" > $log
-echo -e "SAM file processed:\n$sam\n" >> $log
-echo -e "GFF file used:" >> $log
-if [[ -n $gff ]]; then
-	echo -e "$gff\n" >> $log
-else
-	echo -e "GFF file from config file used.\n" >> $log
-fi
-echo -e "Command launched:\n$command" >> $log
 $command > file.chim.txt 2> stderr.log
 
 # Copy the config file in the directory and delete it
