@@ -6,17 +6,21 @@
 . /local/env/envsamtools.sh
 . /local/env/envpython-2.7.sh
 
-# Defining function HTSeq-count_launch
+# Defining the function launching HTSeq-count
 function launch {
 	command="htseq-count $1 $gtf"
 
+	# TEMPORARY
+	#if [[ "$order_pos" == TRUE ]]; then
+	#	command=$command' -r pos'
+	#fi
 	if [[ "$nonstranded" == TRUE ]]; then
 		command=$command' -s no'
-	elif [[ "$reverse" == TRUE ]]; then
+	elif [[ "$stranded_reverse" == TRUE ]]; then
 		command=$command' -s reverse'
 	fi
 	if [[ "$samout_option" == TRUE ]]; then
-		samout=$1'out'
+		samout=file.$rep.samout
 		command=$command" -o $samout"
 	fi
 	command=$command' -q'
@@ -26,38 +30,44 @@ function launch {
 }
 
 # Getting options back
-already_sorted=FALSE
+already_sorted=FALSE # TEMPORARY
+format_bam=FALSE
+order_pos=FALSE
+#already_sorted=FALSE
 nonstranded=FALSE
+stranded_reverse=FALSE
 samout_option=FALSE
-reverse=FALSE
-while getopts "b:g:anro" OPTION
+while getopts "i:g:afrnso" OPTION
 do
 	case $OPTION in
-		b) bam=$OPTARG;;
+		i) input=$OPTARG;;
 		g) gtf=$OPTARG;;
 		a) already_sorted=TRUE;;
+		f) format_bam=TRUE;;
+		#a) already_sorted=TRUE;;
+		r) order_pos=TRUE;;
 		n) nonstranded=TRUE;;
-		r) reverse=TRUE;;
+		s) stranded_reverse=TRUE;;
 		o) samout_option=TRUE;;
 	esac
 done
 
 # Checking parameters validity
-if [[ -z $bam || -z $gtf ]]; then
-	echo "BAM (option '-b') and GTF (option '-g') files are mandatory. Please provide them. Aborting."
+if [[ -z $input || -z $gtf ]]; then
+	echo "Input (option '-i') and GTF (option '-g') files are mandatory. Please provide them. Aborting."
 	exit 1
 fi
-if [[ ! ("$gtf" =~ ^/) ]]; then
-	echo "The input GTF file path must be absolute. Aborting."
+if [[ ! ("$gtf" =~ ^/) || ! ("$input" =~ ^/) ]]; then
+	echo "The input GTF and BAM/SAM file paths must be absolute. Aborting."
 	exit 1
 fi
-if [[ ("$reverse" == TRUE) && ("$nonstranded" == TRUE) ]]; then
-	echo 'The incompatible non-stranded and reverse modes were chosen. Aborting.'
+if [[ ("$stranded_reverse" == TRUE) && ("$nonstranded" == TRUE) ]]; then
+	echo 'The incompatible non-stranded and stranded reverse modes were chosen. Aborting.'
 	exit 1
 fi
 
 # Creating a directory for the job
-rep=$(basename $bam .readname_order.bam)
+rep=$(basename $input .bam)
 if [[ ! -d "$rep.dir" ]]; then
 	mkdir $rep.dir
 	cd $rep.dir
@@ -69,56 +79,70 @@ fi
 # Printing script metadata
 log=file.log
 echo -e "----- Metadata -----\n" > $log
-echo -e "BAM file processed:\n$bam\n" >> $log
+echo -e "BAM file processed:\n$input\n" >> $log
 echo -e "GTF file used:\n$gtf\n" >> $log
 
-# Changing the BAM input file into a SAM one
-sam=file.sorted.sam
-header=file.header
-samtools view -H $bam > $header
-if [[ "$already_sorted" == TRUE ]]; then
-	samtools view $bam > $sam
+# TEMPORARY: sorting file by name, otherwise, "Maximum alignment buffer size exceeded while pairing SAM alignments" error may occur.
+if [[ "$format_bam" == TRUE ]]; then
+	if [[ "$already_sorted" == FALSE ]]; then
+		samtools sort -on $input sorting > file.sorted.bam
+		mv file.sorted.bam $input
+	fi
 else
-	samtools sort -on $bam sorting | samtools view - > $sam
+	if [[ "$already_sorted" == FALSE ]]; then
+		samtools sort -on $input sorting | samtools view - > file.sorted.sam
+		mv file.sorted.sam $input
+	fi
 fi
 
-# Splitting the input dataset into a paired-end file and a non-paired-end file
-awk '!and($2,0x1)' $sam > file.tmp
-if [[ -s file.tmp ]]; then
-	sam_SE=file.sorted.SE.sam
-	cat $header file.tmp > $sam_SE
-fi
-rm file.tmp
-awk 'and($2,0x1)' $sam > file.tmp
-if [[ -s file.tmp ]]; then
-	sam_PE=file.sorted.PE.sam
-	cat $header file.tmp > $sam_PE
+# Splitting the input dataset into a paired-end reads file and a single-end reads file and changing into SAM files if necessary
+if [[ "$format_bam" == TRUE ]]; then
+	samtools view -h -F 0x1 $input > file.tmp
+	if [[ $(awk '! /^@/' file.tmp | wc -l) -ne 0 ]]; then
+		input_SE=file.SE.bam
+		mv file.tmp $input_SE
+	fi
+	samtools view -h -f 0x1 $input > file.tmp
+	if [[ $(awk '! /^@/' file.tmp | wc -l) -ne 0 ]]; then
+		input_PE=file.PE.bam
+		mv file.tmp $input_PE
+	fi
+else
+	samtools view -Sh -F 0x1 $input > file.tmp
+	if [[ $(awk '! /^@/' file.tmp | wc -l) -ne 0 ]]; then
+		input_SE=file.SE.sam
+		mv file.tmp $input_SE
+	fi
+	samtools view -Sh -f 0x1 $input > file.tmp
+	if [[ $(awk '! /^@/' file.tmp | wc -l) -ne 0 ]]; then
+		input_PE=file.PE.sam
+		mv file.tmp $input_PE
+	fi
 fi
 
 # Launching HTSeq-count
 output=file.$rep.count
-if [[ (-e $sam_SE) && (-e $sam_PE) ]]; then
+if [[ (-e $input_SE) && (-e $input_PE) ]]; then
 	count_SE=file.SE.count
 	count_PE=file.PE.count
 	
 	# Executing HTSeq-count
 	echo -e "Paired and non-paired reads processed.\n" >> $log
-	launch $sam_SE $count_SE
-	launch $sam_PE $count_PE
+	launch $input_SE $count_SE
+	launch $input_PE $count_PE
 	
 	# Merging the results
 	paste $count_SE $count_PE | awk 'BEGIN{OFS="\t"}{print $1,$2+$4}' > $output
 else
-	if [[ -e $sam_SE ]]; then
-		sam=$sam_SE
+	if [[ -e $input_SE ]]; then
+		input=$input_SE
 	else
-		sam=$sam_PE
+		input=$input_PE
 	fi
 	# Executing HTSeq-count
 	echo -e "Homogeneous reads (paired or non-paired) processed.\n" >> $log
-	#HTSeq-count_launch $sam $output
-	launch $sam $output
+	launch $input $output
 fi
 
 # Cleaning files
-#rm $sam $sam_SE $sam_PE $header file.tmp $count_SE $count_PE
+rm -f $input $input_SE $input_PE file.tmp $count_SE $count_PE
