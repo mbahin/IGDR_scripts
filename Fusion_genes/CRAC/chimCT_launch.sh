@@ -4,21 +4,19 @@
 
 # Mathieu Bahin, 15/04/14
 
-# Script to launch a chimCT study
+# Template command to launch the script
+#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -g /home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3 -s pairs.sam -n LUPA13 -r
 
 # Config
 . ~/.bash_profile
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
-
-#sam=/home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/chimCT/file.withXP.sam
-#gff3=/home/genouest/umr6061/recomgen/dog/mbahin/chimCT/Res/file.gff3
-#gff3_withID=/home/genouest/umr6061/recomgen/dog/mbahin/chimCT/Res/file.withID.gff3
 
 # Getting options back
 directory='chimCT_results'
 stranded=FALSE
 keep_ig=FALSE
 spanning_reads=FALSE
+conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
 while getopts "d:g:s:n:tkr" OPTION
 do
 	case $OPTION in
@@ -29,13 +27,17 @@ do
     	t) stranded=TRUE;;
     	k) keep_ig=TRUE;;
     	r) spanning_reads=TRUE;;
+    	c) conf=$OPTARG;;
     esac
 done
 
 # Checking parameters
 if [[ -z $sam || -z $sample_name ]]; then
-	echo "Mode (option '-m'), counts file (option '-c') and factors file (option '-f') are mandatory. Please provide them. Aborting."
-	# TODO
+	echo "SAM file (option '-s') and sample name (option '-n') are mandatory. Please provide them. Aborting."
+	exit 1
+fi
+if [[ ! ("$sam" =~ ^/) ]]; then
+	echo "The input SAM file path must be absolute. Aborting."
 	exit 1
 fi
 if [[ -d "$directory" ]]; then
@@ -47,19 +49,11 @@ else
 fi
 
 # Command building
-command="$chimCT -s $sam -n $sample_name --summary summary.txt"
+command="$chimCT -s $sam -n $sample_name --summary summary.txt --conf $conf"
 
 if [[ -n $spanning_reads ]]; then
 	command=$command' --spanning-reads spanR'
 fi
 
 # Executing command
-#chimCT -g $gff3 -s $sam -n LUPA11_chimCT_test --primers primers.txt --summary summary.txt --spanning-reads spanR
-#chimCT -g $gff3 -s $sam -n LUPA11_chimCT_test --primers --summary summary.txt --spanning-reads spanR
-#chimCT -g $gff3 -s $sam -n LUPA11_chimCT_test --summary summary.txt --spanning-reads spanR
-#chimCT -g $gff3_withID -s $sam -n LUPA11_chimCT_test --primers --summary summary.txt --spanning-reads spanR
-#chimCT -g $gff3_withID -s $sam -n LUPA11_chimCT_test --summary summary.txt --spanning-reads spanR
-#chimCT -s $sam -n LUPA11_chimCT_test --keep-ig --summary summary.txt --spanning-reads spanR
 $command > file.chim.txt 2> stderr.log
-
-# Copy the config file in the directory and delete it
