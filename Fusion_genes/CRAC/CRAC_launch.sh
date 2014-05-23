@@ -21,7 +21,7 @@
 . /local/env/envsamtools.sh
 
 # Getting options back
-directory='CRAC_results'
+#directory='CRAC_results'
 index=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/Index/dogIndex
 kmer=22
 #paired_end=TRUE
@@ -30,10 +30,11 @@ output=pairs.bam
 #stringent_chimera=FALSE
 stranded=FALSE;
 detailed_sam=FALSE
-while getopts "c:i:k:r:s:po:uvdt:" OPTION
+#while getopts "c:i:k:r:s:po:uvdt:" OPTION
+while getopts "i:k:r:s:o:vdt:" OPTION
 do
 	case $OPTION in
-		d) directory=$OPTARG;;
+		#d) directory=$OPTARG;;
         i) index=$OPTARG;;
         k) kmer=$OPTARG;;
         r) reads1=$OPTARG;;
@@ -64,7 +65,7 @@ done
 
 
 # Creating a directory for the job
-rep=$(basename $reads1 '_R1.paired.trim.fastq.gz')
+rep=$(basename $reads1 '_R1.paired.trim.fastq.gz')_CRAC
 if [[ ! -d "$rep.dir" ]]; then
 	mkdir $rep.dir
 	cd $rep.dir
