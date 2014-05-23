@@ -12,15 +12,15 @@
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
 
 # Getting options back
-directory='chimCT_results'
+#directory='chimCT_results'
 stranded=FALSE
 keep_ig=FALSE
 spanning_reads=FALSE
 conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
-while getopts "d:g:s:n:tkr" OPTION
+while getopts "g:s:n:tkrc:" OPTION
 do
 	case $OPTION in
-    	d) directory=$OPTARG;;
+    	#d) directory=$OPTARG;;
     	g) gff=$OPTARG;;
     	s) sam=$OPTARG;;
     	n) sample_name=$OPTARG;;
@@ -40,6 +40,7 @@ if [[ ! ("$sam" =~ ^/) ]]; then
 	echo "The input SAM file path must be absolute. Aborting."
 	exit 1
 fi
+directory=${sample_name}_chimCT.dir
 if [[ -d "$directory" ]]; then
 	echo "Directory $directory already exists. Aborting."
 	exit 1
@@ -51,8 +52,11 @@ fi
 # Command building
 command="$chimCT -s $sam -n $sample_name --summary summary.txt --conf $conf"
 
-if [[ -n $spanning_reads ]]; then
+if [[ "$spanning_reads" == TRUE ]]; then
 	command=$command' --spanning-reads spanR'
+fi
+if [[ "$keep_ig" == TRUE ]]; then
+	command=$command' --keep-ig'
 fi
 
 # Executing command
