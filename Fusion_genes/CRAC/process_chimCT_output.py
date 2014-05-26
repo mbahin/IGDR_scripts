@@ -24,11 +24,8 @@ paral_file = open('/home/genouest/genouest/mbahin/Fusion_genes/CRAC/paralogous_1
 ENSCAFGs = {}
 paral_file.readline()
 for line in paral_file:
-    #print line
-    #print line.split('\t')
-    #enscafg,gene_name,paralog,paralogy_type = line.rstrip().split('\t')[0:4]
-    enscafg = line.rstrip().split('\t')[0]
-    gene_name = line.rstrip().split('\t')[1]
+    enscafg,gene_name,paralog = line.split('\t')[0:3]
+    paralogy_type = line.split('\t')[3].rstrip()
     if gene_name == '':
         gene_name = 'No_gene_name'
     if not ENSCAFGs.has_key(enscafg):
@@ -53,6 +50,8 @@ for line in input:
     # Catching line information
     (chimID,chr1,end1,strand1,chr2,start2,strand2) = (line.rstrip().split('\t')[1:8])
     (spR,spP,chimClass,warnings) = (line.rstrip().split('\t')[9:13])
+    if chimClass == '4':
+        continue
     match=re.match(r'FusionDistance=([^,]*)',warnings)
     if match:
         warn = match.group(1)
