@@ -9,11 +9,12 @@
 . /local/env/envR-3.1.0.sh
 
 # Config
-DESeq2_script='/home/genouest/genouest/mbahin/DE/DESeq2_script.r'
-edgeR_script='/home/genouest/genouest/mbahin/DE/edgeR_script.r'
+DESeq2_launch='/home/genouest/genouest/mbahin/DE/DESeq2_launch.r'
+edgeR_launch='/home/genouest/genouest/mbahin/DE/edgeR_launch.r'
 merge_analyses_script='/home/genouest/genouest/mbahin/DE/merge_analyses.py'
 
 # Getting options back
+mode='de'
 directory='MultiDE'
 paired_design=FALSE
 glm=FALSE
@@ -135,7 +136,7 @@ if [[ "$mode" =~ 'd' ]]; then
 	echo "====== Launching a $DESeq2_mode analysis on the input data..."
 	mkdir $DESeq2_mode
 	cd $DESeq2_mode
-	Rscript $DESeq2_script $htsfilter $paired_design
+	Rscript $DESeq2_launch $htsfilter $paired_design
 	cd ..
 fi
 if [[ "$mode" =~ 'e' ]]; then
@@ -152,7 +153,7 @@ if [[ "$mode" =~ 'e' ]]; then
 	echo "===== Launching a $edgeR_mode analysis on the input data..."
 	mkdir $edgeR_mode
 	cd $edgeR_mode
-	Rscript $edgeR_script $htsfilter $glm $paired_design
+	Rscript $edgeR_launch $htsfilter $glm $paired_design
 	cd ..
 fi
 
