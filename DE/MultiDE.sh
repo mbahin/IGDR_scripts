@@ -35,8 +35,8 @@ do
 done
 
 # Checking parameters
-if [[ -z $mode || -z $counts || -z $factors ]]; then
-	echo "Mode (option '-m'), counts file (option '-c') and factors file (option '-f') are mandatory. Please provide them. Aborting."
+if [[ -z $counts || -z $factors ]]; then
+	echo "Counts file (option '-c') and factors file (option '-f') are mandatory. Please provide them. Aborting."
 	exit 1
 fi
 if [[ ! ("$mode" != 'de' || "$mode" != 'ed' || "$mode" != 'e' || "$mode" != 'd') ]]; then
@@ -165,7 +165,6 @@ if [[ ${#mode} == 2 ]]; then
     # Creating a Venn diagram
     Rscript /home/genouest/genouest/mbahin/DE/create_Venn.r
 fi
-echo "DE gene(s) found: "$(wc -l file.gene_id.list | awk '{print $1}')
 echo "Done."
 
 # Cleaning
