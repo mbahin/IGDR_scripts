@@ -13,21 +13,21 @@ from collections import OrderedDict
 
 def write_RLOC_info(rloc,file):
     #####
-    # Function to write the information on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD) into the result files.
+    # Function to write the information on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD and gene biotype) into the result files.
     #####
     if RLOCs_index.has_key(rloc):
         file.write(','.join(RLOCs_index[rloc]))
-        names = ''
+        names = []
         for enscafg in RLOCs_index[rloc]:
             BM_name = ENSCAFGs_BM[enscafg]['gene_name']
-            TD_name = ENSCAFGs_TD[enscafg]
+            TD_name = ENSCAFGs_TD[enscafg]['gene_name']
             if BM_name == TD_name:
-                names += BM_name+','
+                names.append(BM_name)
             else:
-                names += BM_name+'||'+TD_name+','
-        file.write('\t'+names.rstrip(',')+'\t')
+                names.append(BM_name+'||'+TD_name)
+        file.write('\t'+','.join(names)+'\t'+ENSCAFGs_TD[enscafg]['biotype']+'\t')
     else:
-        file.write('No_feat\tNA\t')
+        file.write('No_feat\tNA\tNA\t')
 
 def write_res(file,one_feat):
     #####
@@ -67,7 +67,10 @@ ENSCAFGs_TD_file = open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_ind
 ENSCAFGs_TD = {}
 for line in ENSCAFGs_TD_file:
     enscafg = line.split('\t')[0]
-    ENSCAFGs_TD[enscafg] = line.split('\t')[1].rstrip()
+    if not ENSCAFGs_TD.has_key(enscafg):
+        ENSCAFGs_TD[enscafg] = {}
+    ENSCAFGs_TD[enscafg]['gene_name'] = line.split('\t')[1]
+    ENSCAFGs_TD[enscafg]['biotype'] = line.rstrip().split('\t')[2]
 
 #for i in ENSCAFGs_TD:
 #    print i,ENSCAFGs_TD[i]
