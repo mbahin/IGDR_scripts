@@ -16,7 +16,7 @@ def write_RLOC_info(rloc,file):
     # Function to write the information on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD) into the result files.
     #####
     if RLOCs_index.has_key(rloc):
-        file.write('\t'+','.join(RLOCs_index[rloc]))
+        file.write(','.join(RLOCs_index[rloc]))
         names = ''
         for enscafg in RLOCs_index[rloc]:
             BM_name = ENSCAFGs_BM[enscafg]['gene_name']
@@ -27,16 +27,19 @@ def write_RLOC_info(rloc,file):
                 names += BM_name+'||'+TD_name+','
         file.write('\t'+names.rstrip(',')+'\t')
     else:
-        file.write('\tNo_feat\tNA\t')
+        file.write('No_feat\tNA\t')
 
 def write_res(file,one_feat):
     #####
     # Function to write the information relative to a line in the chimera file from chimCT into the result files.
     #####
-    file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),str(orderedChim[chim]['spP']),str(','.join(orderedChim[chim]['warnings']))))+'\t')
+    file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),str(orderedChim[chim]['spP'])))+'\t')
     for chimClass in orderedChim[chim]['breakpoint']:
+        breakpoints = []
+        file.write('cl'+chimClass+' -> ')
         for pos in orderedChim[chim]['breakpoint'][chimClass]:
-            file.write(' ('+str(pos[0])+':'+str(pos[1])+','+str(pos[2])+' / '+str(pos[3])+':'+str(pos[4])+','+str(pos[5])+' # '+str(pos[6])+','+str(pos[7])+')')
+            breakpoints.append('('+str(pos[0])+':'+str(pos[1])+','+str(pos[2])+' / '+str(pos[3])+':'+str(pos[4])+','+str(pos[5])+' # '+str(pos[6])+','+str(pos[7])+')')
+        file.write(','.join(breakpoints)+'\t'+str(','.join(orderedChim[chim]['warnings']))+'\t')
     if one_feat == 'First':
         write_RLOC_info(RLOCs[0],file)
         file.write('\n')
@@ -100,11 +103,13 @@ for line in input:
     if line.startswith('#'):
         continue
     # Catching line information
-    (chimID,chr1,end1,strand1,chr2,start2,strand2) = (line.rstrip().split('\t')[1:8])
-    (spR,spP,chimClass,warnings) = (line.rstrip().split('\t')[9:13])
+    (chimID,chr1,end1,strand1,chr2,start2,strand2) = (line.split('\t')[1:8])
+    (chimClass,warnings) = (line.split('\t')[11:13])
+    spR = re.match(r'Nb_spanning_reads=(.*)',line.split('\t')[21]).group(1)
+    spP = re.match(r'Nb_spanning_PE=(.*)',line.rstrip().split('\t')[22]).group(1)
     if chimClass == '4':
         continue
-    match=re.match(r'FusionDistance=([^,]*)',warnings)
+    match = re.match(r'FusionDistance=([^,]*)',warnings)
     if match:
         warn = match.group(1)
     else:
@@ -132,10 +137,10 @@ for line in input:
 input.close()
 
 # Opening output files
-noFeat_file = open('file.noFeat.chimera','w')
-oneFeat_file = open('file.oneFeat.chimera','w')
-monoFeat_file = open('file.monoFeat.chimera','w')
-twoFeat_file = open('file.twoFeat.chimera','w')
+noFeat_file = open('file.noFeat.xls','w')
+oneFeat_file = open('file.oneFeat.xls','w')
+monoFeat_file = open('file.monoFeat.xls','w')
+twoFeat_file = open('file.twoFeat.xls','w')
 
 # Writing the file for chimera with 2 unmatched parts
 noFeat.sort(key = lambda x:int(x[0]),reverse=True)
