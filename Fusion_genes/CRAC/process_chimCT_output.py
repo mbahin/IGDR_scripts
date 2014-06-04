@@ -18,6 +18,9 @@ def write_RLOC_info(rloc,file):
     if RLOCs_index.has_key(rloc):
         file.write(','.join(RLOCs_index[rloc]))
         names = []
+        biotype = []
+        in_mutation_list = []
+        in_translocation_list = []
         for enscafg in RLOCs_index[rloc]:
             BM_name = ENSCAFGs_BM[enscafg]['gene_name']
             TD_name = ENSCAFGs_TD[enscafg]['gene_name']
@@ -25,9 +28,18 @@ def write_RLOC_info(rloc,file):
                 names.append(BM_name)
             else:
                 names.append(BM_name+'||'+TD_name)
-        file.write('\t'+','.join(names)+'\t'+ENSCAFGs_TD[enscafg]['biotype']+'\t')
+            biotype.append(ENSCAFGs_TD[enscafg]['biotype'])
+            if enscafg in mutations:
+                in_mutation_list.append('Yes')
+            else:
+                in_mutation_list.append('No')
+            if enscafg in translocations:
+                in_translocation_list.append('Yes')
+            else:
+                in_translocation_list.append('No')
+        file.write('\t'+','.join(names)+'\t'+','.join(biotype)+'\t'+','.join(in_mutation_list)+'\t'+','.join(in_translocation_list)+'\t')
     else:
-        file.write('No_feat\tNA\tNA\t')
+        file.write('No_feat\tNA\tNA\tNA\tNA\t')
 
 def write_res(file,one_feat):
     #####
@@ -97,6 +109,22 @@ for line in paral_file:
 #for i in ENSCAFGs_BM:
 #    print i,ENSCAFGs_BM[i]
 paral_file.close()
+
+# Indexing the cancer mutation list
+mutation_file = open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r')
+mutations = []
+for line in mutation_file:
+    mutations.append(line.split('\t')[0])
+
+mutation_file.close()
+
+# Indexing the cancer translocation list
+translocation_file = open('/home/genouest/genouest/mbahin/Annotations/translocation_gene_list.txt','r')
+translocations = []
+for line in translocation_file:
+    translocations.append(line.split('\t')[0])
+
+translocation_file.close()
 
 # Processing chimCT output
 input = open(sys.argv[1],'r')
