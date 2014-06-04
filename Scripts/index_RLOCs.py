@@ -24,6 +24,8 @@ for line in input:
     match = re.match(r'(.*)_[0-9]*$',name)
     if match:
         name = match.group(1)
+    biotype_BROAD = line.split('\t')[8].split('"')[5]
+    biotype_Ensembl = line.split('\t')[10]
     enscafg = line.split('\t')[17].split('"')[1]
     # Filling RLOCs index
     if not RLOCs.has_key(rloc):
@@ -38,20 +40,34 @@ for line in input:
         #print 'Oh oh... :',enscafg, name
         #exit
     if not name.startswith('ENSCAFG') and not name.startswith('CFRNASEQ') and not name.startswith('ENSCAFT'):
-        if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg] != name:
+        if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg]['name'] != name:
             sys.exit('Two names for ENSCAFG '+enscafg+'! Aborting.')
-        ENSCAFGs[enscafg] = name
+        if not ENSCAFGs.has_key(enscafg):
+            ENSCAFGs[enscafg] = {}
+            ENSCAFGs[enscafg]['biotype'] = ''
+        ENSCAFGs[enscafg]['name'] = name
     else:
-        if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg] != 'No_name':
+        if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg]['name'] != 'No_name':
             sys.exit('Two names for ENSCAFG '+enscafg+'! Aborting.')
-        ENSCAFGs[enscafg] = 'No_name'
+        if not ENSCAFGs.has_key(enscafg):
+            ENSCAFGs[enscafg] = {}
+            ENSCAFGs[enscafg]['biotype'] = ''
+        ENSCAFGs[enscafg]['name'] = 'No_name'
+    if ENSCAFGs[enscafg]['biotype'] != 'Ambiguous':
+        if biotype_BROAD != biotype_Ensembl:
+            ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'
+        elif ENSCAFGs[enscafg]['biotype'] == '':
+            ENSCAFGs[enscafg]['biotype'] = biotype_BROAD
+        elif ENSCAFGs[enscafg]['biotype'] != biotype_BROAD:
+            ENSCAFGs[enscafg]['biotype'] = 'Multiple'
+        
 
 # Writing index files
 for rloc in sorted(RLOCs):
     RLOC_output.write(rloc+'\t'+','.join(RLOCs[rloc])+'\n')
 
 for enscafg in sorted(ENSCAFGs):
-    ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]+'\n')
+    ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['name']+'\t'+ENSCAFGs[enscafg]['biotype']+'\n')
 
 # Closing fils
 input.close()
