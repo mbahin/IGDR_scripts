@@ -89,7 +89,7 @@ for line in ENSCAFGs_TD_file:
 ENSCAFGs_TD_file.close()
 
 # Indexing the paralogues file (from BioMart)
-paral_file = open('/home/genouest/genouest/mbahin/Fusion_genes/CRAC/paralogous_140523.txt','r')
+paral_file = open('/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt','r')
 #paral_file = open('/home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/CRAC/chimCT/paralogous_test.txt','r')
 ENSCAFGs_BM = {}
 paral_file.readline()
@@ -174,10 +174,15 @@ monoFeat_file = open('file.monoFeat.xls','w')
 twoFeat_file = open('file.twoFeat.xls','w')
 
 # Writing the file for chimera with 2 unmatched parts
+noFeat_file.write('\t'.join(('nb spanning reads','nb spanning PE','chr1:pos1,strand1','chr2:pos2,strand2','warning'))+'\n')
 noFeat.sort(key = lambda x:int(x[0]),reverse=True)
 for c in noFeat:
-    noFeat_file.write('\t'.join(c[0:3])+'\t'+c[3]+':'+c[4]+','+c[5]+'\t'+c[6]+':'+c[7]+','+c[8]+'\n')
+    noFeat_file.write('\t'.join(c[0:2])+'\t'+c[3]+':'+c[4]+','+c[5]+'\t'+c[6]+':'+c[7]+','+c[8]+'\t'+c[2]+'\n')
 
+# Writing the files for chimeras with at least one matched part
+oneFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','chim class -> (chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG_list','gene_name_list','biotype','in mutation list','in translocation list'))+'\n')
+monoFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','chim class -> (chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG_list','gene_name_list','biotype','in mutation list','in translocation list'))+'\n')
+twoFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','chim class -> (chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG1_list','gene_name1_list','biotype1','in mutation list','in translocation list','ENSCAFG2_list','gene_name2_list','biotype2','in mutation list','in translocation list','paralogy'))+'\n')
 orderedChim = OrderedDict(sorted(chim.iteritems(), key = lambda x:x[1]['spR'], reverse=True))
 #for i in orderedChim:
 #    print i,orderedChim[i]
