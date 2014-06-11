@@ -59,14 +59,12 @@ for line in intersection_file:
             ENSCAFGs[enscafg] = {}
             ENSCAFGs[enscafg]['biotype'] = ''
         ENSCAFGs[enscafg]['name'] = 'No_name'
-    # Filling the biotype information
+    # Filling the biotype information ('Ambiguous' when Ensembl and the BROAD diasgree, 'Multiple' when there are transcripts from exons with different biotypes)
     if ENSCAFGs[enscafg]['biotype'] != 'Ambiguous':
-        if biotype_BROAD != biotype_Ensembl:
+        if (biotype_BROAD != biotype_Ensembl) or ((ENSCAFGs[enscafg]['biotype'] != '') and ((ENSCAFGs[enscafg]['biotype'] != biotype_BROAD) or (ENSCAFGs[enscafg]['biotype'] != biotype_Ensembl))):
             ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'
-        elif ENSCAFGs[enscafg]['biotype'] == '':
+        else:
             ENSCAFGs[enscafg]['biotype'] = biotype_BROAD
-        elif ENSCAFGs[enscafg]['biotype'] != biotype_BROAD:
-            ENSCAFGs[enscafg]['biotype'] = 'Multiple'
 
 # Catching more information from the GFF file (BROAD names without ENSCAFG)
 ###
@@ -75,7 +73,7 @@ for line in intersection_file:
 for line in gff_file:
     if line.split('\t')[2] == 'mRNA':
         enscafg = ''
-        match = re.match(r'ID=(.*);Parent=(RLOC_.*);exons',line.split('\t')[8])
+        match = re.match(r'ID=(.*);Parent=(RLOC_.*);*;type=.*:(.*);',line.split('\t')[8])
         match2 = re.match(r'(.*)_[0-9]*$',match.group(1))
         if match2:
             enscafg = match2.group(1)
@@ -89,6 +87,12 @@ for line in gff_file:
             if enscafg.startswith('ENSCAFG'):
                 RLOCs[match.group(2)]['enscafg'] = enscafg
                 RLOCs[match.group(2)]['BROAD_bonus'] = ''
+                if (ENSCAFGs.has_key(enscafg)) and (ENSCAFGs[enscafg]['biotype'] != match.group(3)):
+                    ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'
+                elif not ENSCAFGs.has_key(enscafg):
+                    ENSCAFGs[enscafg] = {}
+                    ENSCAFGs[enscafg]['name']
+                    print enscafg,ENSCAFGs[enscafg]['biotype'],match.group(3)
             else:
                 RLOCs[match.group(2)]['enscafg'] = ['No_ENSCAFG']
                 RLOCs[match.group(2)]['BROAD_bonus'] = enscafg
