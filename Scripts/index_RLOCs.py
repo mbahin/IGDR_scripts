@@ -39,6 +39,7 @@ for line in input:
     #if name.startswith ('ENSCAFG') and name != enscafg:
         #print 'Oh oh... :',enscafg, name
         #exit
+    # Filling gene name information
     if not name.startswith('ENSCAFG') and not name.startswith('CFRNASEQ') and not name.startswith('ENSCAFT'):
         if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg]['name'] != name:
             sys.exit('Two names for ENSCAFG '+enscafg+'! Aborting.')
@@ -53,6 +54,7 @@ for line in input:
             ENSCAFGs[enscafg] = {}
             ENSCAFGs[enscafg]['biotype'] = ''
         ENSCAFGs[enscafg]['name'] = 'No_name'
+    # Filling the biotype information
     if ENSCAFGs[enscafg]['biotype'] != 'Ambiguous':
         if biotype_BROAD != biotype_Ensembl:
             ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'

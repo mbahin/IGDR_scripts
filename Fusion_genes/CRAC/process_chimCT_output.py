@@ -6,12 +6,13 @@
 # The input is the chimera file produced by chimCT.
 # Outputs are the 4 file describing the chimeras.
 
-import sys, re
+import sys, re, os
 from collections import OrderedDict
+from subprocess import *
 
 ###### Functions
 
-def write_RLOC_info(rloc,file):
+def write_RLOC_info(rloc,file,part):
     #####
     # Function to write the information on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD and gene biotype) into the result files.
     #####
@@ -22,6 +23,7 @@ def write_RLOC_info(rloc,file):
         in_mutation_list = []
         in_translocation_list = []
         for enscafg in RLOCs_index[rloc]:
+        #for enscafg in enscafg_list:
             BM_name = ENSCAFGs_BM[enscafg]['gene_name']
             TD_name = ENSCAFGs_TD[enscafg]['gene_name']
             if BM_name == TD_name:
@@ -45,22 +47,23 @@ def write_res(file,one_feat):
     #####
     # Function to write the information relative to a line in the chimera file from chimCT into the result files.
     #####
-    file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),str(orderedChim[chim]['spP'])))+'\t')
-    for chimClass in orderedChim[chim]['breakpoint']:
-        breakpoints = []
-        file.write('cl'+chimClass+' -> ')
-        for pos in orderedChim[chim]['breakpoint'][chimClass]:
-            breakpoints.append('('+str(pos[0])+':'+str(pos[1])+','+str(pos[2])+' / '+str(pos[3])+':'+str(pos[4])+','+str(pos[5])+' # '+str(pos[6])+','+str(pos[7])+')')
-        file.write(','.join(breakpoints)+'\t'+str(','.join(orderedChim[chim]['warnings']))+'\t')
+
+    file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),str(orderedChim[chim]['spP']),str(orderedChim[chim]['class'])))+'\t')
+    breakpoints = []
+    for pos in orderedChim[chim]['breakpoint']:
+        breakpoints.append('('+str(pos[0])+':'+str(pos[1])+','+str(pos[2])+' / '+str(pos[3])+':'+str(pos[4])+','+str(pos[5])+' # '+str(pos[6])+','+str(pos[7])+')')
+    file.write(','.join(breakpoints)+'\t'+str(','.join(orderedChim[chim]['warnings']))+'\t')
     if one_feat == 'First':
-        write_RLOC_info(RLOCs[0],file)
+        write_RLOC_info(RLOCs[0],file,1)
         file.write('\n')
     elif one_feat == 'Second':
-        write_RLOC_info(RLOCs[1],file)
+        write_RLOC_info(RLOCs[1],file,2)
         file.write('\n')
     else:
+        i = 1
         for rloc in RLOCs:
-            write_RLOC_info(rloc,file)
+            write_RLOC_info(rloc,file,i)
+            i+= 1
 ##### Functions end
 
 # Indexing the RLOCs index
@@ -148,22 +151,24 @@ for line in input:
     # Chimeras with 2 unmatched features
     RLOCs = chimID.split('---')
     if chimID == 'N/A---N/A':
-        noFeat.append((spR,spP,warn,chr1,end1,strand1,chr2,start2,strand2))
+        noFeat.append((chimClass,spR,spP,warn,chr1,end1,strand1,chr2,start2,strand2))
         continue
     # Commands executed only the first time the chimera is met
     if not chim.has_key(chimID):
         chim[chimID] = {}
         chim[chimID]['spR'] = 0
         chim[chimID]['spP'] = 0
-        chim[chimID]['breakpoint'] = {}
+        chim[chimID]['class'] = chimClass
+        chim[chimID]['breakpoint'] = []
         chim[chimID]['warnings'] = []
     # Commands executed for each processed line
     chim[chimID]['spR'] += int(spR)
     chim[chimID]['spP'] += int(spP)
     chim[chimID]['warnings'].append(warn)
-    if not chim[chimID]['breakpoint'].has_key(chimClass):
-        chim[chimID]['breakpoint'][chimClass] = []
-    chim[chimID]['breakpoint'][chimClass].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
+    #if not chim[chimID]['breakpoint'].has_key(chimClass):
+        #chim[chimID]['breakpoint'][chimClass] = []
+    #chim[chimID]['breakpoint'][chimClass].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
+    chim[chimID]['breakpoint'].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
 
 input.close()
 
@@ -174,18 +179,19 @@ monoFeat_file = open('file.monoFeat.xls','w')
 twoFeat_file = open('file.twoFeat.xls','w')
 
 # Writing the file for chimera with 2 unmatched parts
-noFeat_file.write('\t'.join(('nb spanning reads','nb spanning PE','chr1:pos1,strand1','chr2:pos2,strand2','warning'))+'\n')
-noFeat.sort(key = lambda x:int(x[0]),reverse=True)
+noFeat_file.write('\t'.join(('nb spanning reads','nb spanning PE','class','chr1:pos1,strand1','chr2:pos2,strand2','warning'))+'\n')
+noFeat.sort(key = lambda x:int(x[1
+]),reverse=True)
 for c in noFeat:
-    noFeat_file.write('\t'.join(c[0:2])+'\t'+c[3]+':'+c[4]+','+c[5]+'\t'+c[6]+':'+c[7]+','+c[8]+'\t'+c[2]+'\n')
+    noFeat_file.write(c[1]+'\t'+c[2]+'\t'+c[0]+'\t'+c[4]+':'+c[5]+','+c[6]+'\t'+c[7]+':'+c[8]+','+c[9]+'\t'+c[3]+'\n')
 
 # Writing the files for chimeras with at least one matched part
-oneFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','chim class -> (chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG_list','gene_name_list','biotype','in mutation list','in translocation list'))+'\n')
-monoFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','chim class -> (chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG_list','gene_name_list','biotype','in mutation list','in translocation list'))+'\n')
-twoFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','chim class -> (chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG1_list','gene_name1_list','biotype1','in mutation list','in translocation list','ENSCAFG2_list','gene_name2_list','biotype2','in mutation list','in translocation list','paralogy'))+'\n')
+oneFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','class','(chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG_list','gene_name_list','biotype','in mutation list','in translocation list'))+'\n')
+monoFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','class','(chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG_list','gene_name_list','biotype','in mutation list','in translocation list'))+'\n')
+twoFeat_file.write('\t'.join(('chimID','nb spanning reads','nb spanning PE','class','(chr1:pos1,strand1 / chr2:pos2,strand2)','warning','ENSCAFG1_list','gene_name1_list','biotype1','in mutation list','in translocation list','ENSCAFG2_list','gene_name2_list','biotype2','in mutation list','in translocation list','paralogy'))+'\n')
 orderedChim = OrderedDict(sorted(chim.iteritems(), key = lambda x:x[1]['spR'], reverse=True))
 #for i in orderedChim:
-#    print i,orderedChim[i]
+    #print i,orderedChim[i]
 
 for chim in orderedChim:
     RLOCs = chim.split('---')
