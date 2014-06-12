@@ -32,7 +32,7 @@ for line in intersection_file:
     if not RLOCs.has_key(rloc):
         RLOCs[rloc] = {}
         RLOCs[rloc]['enscafg'] = []
-        RLOCs[rloc]['BROAD_bonus'] = ''
+        RLOCs[rloc]['BROAD_bonus'] = 'No_BROAD_bonus'
     if enscafg not in RLOCs[rloc]['enscafg']:
         #RLOCs[rloc].append(enscafg)
         RLOCs[rloc]['enscafg'].append(enscafg)
@@ -73,7 +73,7 @@ for line in intersection_file:
 for line in gff_file:
     if line.split('\t')[2] == 'mRNA':
         enscafg = ''
-        match = re.match(r'ID=(.*);Parent=(RLOC_.*);*;type=.*:(.*);',line.split('\t')[8])
+        match = re.match(r'ID=(.*);Parent=(RLOC_.*);exon.*;type=.*:(.*);',line.split('\t')[8])
         match2 = re.match(r'(.*)_[0-9]*$',match.group(1))
         if match2:
             enscafg = match2.group(1)
@@ -84,9 +84,10 @@ for line in gff_file:
             #print "Oh no !",match.group(2),enscafg,str(RLOCs[match.group(2)]['enscafg'])
         if (not RLOCs.has_key(match.group(2))) and (not match.group(1).startswith('CFRNASEQ')):
             RLOCs[match.group(2)] = {}
+            RLOCs[match.group(2)]['enscafg'] = []
             if enscafg.startswith('ENSCAFG'):
-                RLOCs[match.group(2)]['enscafg'] = enscafg
-                RLOCs[match.group(2)]['BROAD_bonus'] = ''
+                RLOCs[match.group(2)]['enscafg'].append(enscafg)
+                RLOCs[match.group(2)]['BROAD_bonus'] = 'No_BROAD_bonus'
                 if (ENSCAFGs.has_key(enscafg)) and (ENSCAFGs[enscafg]['biotype'] != match.group(3)):
                     ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'
                 elif not ENSCAFGs.has_key(enscafg):
