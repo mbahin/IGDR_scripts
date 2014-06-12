@@ -14,32 +14,35 @@ from subprocess import *
 
 def write_RLOC_info(rloc,file,part):
     #####
-    # Function to write the information on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD and gene biotype) into the result files.
+    # Function to write the info on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD and gene biotype) into the result files.
     #####
     if RLOCs_index.has_key(rloc):
-        file.write(','.join(RLOCs_index[rloc]))
-        names = []
-        biotype = []
-        in_mutation_list = []
-        in_translocation_list = []
-        for enscafg in RLOCs_index[rloc]:
-        #for enscafg in enscafg_list:
-            BM_name = ENSCAFGs_BM[enscafg]['gene_name']
-            TD_name = ENSCAFGs_TD[enscafg]['gene_name']
-            if BM_name == TD_name:
-                names.append(BM_name)
-            else:
-                names.append(BM_name+'||'+TD_name)
-            biotype.append(ENSCAFGs_TD[enscafg]['biotype'])
-            if enscafg in mutations:
-                in_mutation_list.append('Yes')
-            else:
-                in_mutation_list.append('No')
-            if enscafg in translocations:
-                in_translocation_list.append('Yes')
-            else:
-                in_translocation_list.append('No')
-        file.write('\t'+','.join(names)+'\t'+','.join(biotype)+'\t'+','.join(in_mutation_list)+'\t'+','.join(in_translocation_list)+'\t')
+        if RLOCs_index[rloc]['enscafg'] != ['No_ENSCAFG']:
+            file.write(','.join(RLOCs_index[rloc]['enscafg']))
+            names = []
+            biotype = []
+            in_mutation_list = []
+            in_translocation_list = []
+            for enscafg in RLOCs_index[rloc]['enscafg']:
+            #for enscafg in enscafg_list:
+                BM_name = ENSCAFGs_BM[enscafg]['gene_name']
+                TD_name = ENSCAFGs_TD[enscafg]['gene_name']
+                if BM_name == TD_name:
+                    names.append(BM_name)
+                else:
+                    names.append(BM_name+'||'+TD_name)
+                biotype.append(ENSCAFGs_TD[enscafg]['biotype'])
+                if enscafg in mutations:
+                    in_mutation_list.append('Yes')
+                else:
+                    in_mutation_list.append('No')
+                if enscafg in translocations:
+                    in_translocation_list.append('Yes')
+                else:
+                    in_translocation_list.append('No')
+            file.write('\t'+','.join(names)+'\t'+','.join(biotype)+'\t'+','.join(in_mutation_list)+'\t'+','.join(in_translocation_list)+'\t')
+        else:
+            file.write('No_ENSCAFG\t'+RLOCs_index[rloc]['BROAD_bonus']+'\tNA\tNA\tNA\t')
     else:
         file.write('No_feat\tNA\tNA\tNA\tNA\t')
 
@@ -70,8 +73,11 @@ def write_res(file,one_feat):
 RLOCs_file = open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r')
 RLOCs_index = {}
 for line in RLOCs_file:
-    RLOC = line.split('\t')[0]
-    RLOCs_index[RLOC] = line.rstrip().split('\t')[1].split(',')
+    rloc = line.split('\t')[0]
+    if not RLOCs_index.has_key(rloc):
+        RLOCs_index[rloc] = {}
+    RLOCs_index[rloc]['enscafg'] = line.split('\t')[1].split(',')
+    RLOCs_index[rloc]['BROAD_bonus'] = line.rstrip().split('\t')[2]
 
 #for i in RLOCs_index:
 #    print i,RLOCs_index[i]
@@ -201,8 +207,8 @@ for chim in orderedChim:
         # Determining if the two features are considered paralogous
         paralogous = False
         if RLOCs_index.has_key(RLOCs[0]) and RLOCs_index.has_key(RLOCs[1]):
-            for enscafg1 in RLOCs_index[RLOCs[0]]:
-                for enscafg2 in RLOCs_index[RLOCs[1]]:
+            for enscafg1 in RLOCs_index[RLOCs[0]]['enscafg']:
+                for enscafg2 in RLOCs_index[RLOCs[1]]['enscafg']:
                     if ENSCAFGs_BM.has_key(enscafg1):
                         if enscafg2 in ENSCAFGs_BM[enscafg1]['paralogous_genes']:
                             paralogous = True
