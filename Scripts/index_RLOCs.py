@@ -2,9 +2,9 @@
 
 # Mathieu Bahin, 21/05/14
 
-# Script to index the RLOCs into list of ENSCAFGs and gene names.
-# Input is a file intersecting BROAD and ensembl annotation.
-# Output is a tab-separated file with the RLOC and its ENSCAFG(s).
+# Script to index the RLOCs and ENSCAFGs. 2 index files are created. The RLOC index list the ENSCAFGs corresponding to each RLOC (from the file intersecting BROAD and Ensembl features). If none is found, information can sometimes be found in the GFF file (particularly human homologous gene names. If so, the second column is 'No_ENSCAFG' and the additive information is in the third column. Else, if no information can be found, the RLOC is not present in the index. Most of the times, there is the RLOC, its ENSCAFGs list and 'No_BROAD_bonus' in the third column (if an ENSCAFG is found in the intersection file, no information is searched in the GFF file).
+# Input is a file intersecting BROAD and ensembl annotation, the GFF file corresponding and the 2 index filenames to produce.
+# Output are two tab-separated files with the RLOCs and ENSCAFGs indexes.
 
 import sys, re
 
