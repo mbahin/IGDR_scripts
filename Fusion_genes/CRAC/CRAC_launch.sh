@@ -27,11 +27,12 @@ kmer=22
 #paired_end=TRUE
 #output=pairs.sam
 output=pairs.bam
-#stringent_chimera=FALSE
+stringent_chimera=FALSE
+noAmbiguity=FALSE
 stranded=FALSE;
 detailed_sam=FALSE
 #while getopts "c:i:k:r:s:po:uvdt:" OPTION
-while getopts "i:k:r:s:o:vdt:" OPTION
+while getopts "i:k:r:s:ou:nvdt:" OPTION
 do
 	case $OPTION in
 		#d) directory=$OPTARG;;
@@ -41,7 +42,8 @@ do
         s) reads2=$OPTARG;;
         #p) paired_end=FALSE;;
         o) output=$OPTARG;;
-        #u) stringent_chimera=TRUE;;
+        u) stringent_chimera=TRUE;;
+        n) noAmbiguity=TRUE;;
         v) stranded=TRUE;;
         d) detailed_sam=TRUE;;
         t) threads=$OPTARG;;
@@ -96,9 +98,12 @@ command="crac -i $index -k $kmer -r $reads1"
 if [[ -n "$reads2" ]]; then
 	command=$command" $reads2"
 fi
-#if [[ "$stringent" == TRUE ]]; then
-#	command=$command' --stringent-chimera'
-#fi
+if [[ "$stringent" == TRUE ]]; then
+	command=$command' --stringent-chimera'
+fi
+if [[ "$noAmbiguity" == TRUE ]]; then
+	command=$command' --no-ambiguity'
+fi
 if [[ "$stranded" == TRUE ]]; then
 	command=$command' --stranded'
 fi
