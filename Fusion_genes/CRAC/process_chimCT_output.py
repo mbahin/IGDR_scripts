@@ -3,10 +3,10 @@
 # Mathieu Bahin, 21/05/14
 
 # Script to process chimCT output. The chimeras are split into 4 categories according to the number of part matching a known feature: 2 different, twice the same, only one, zero. Information are provided about the chimeras and the features matched.
-# The input is the chimera file produced by chimCT.
-# Outputs are the 4 file describing the chimeras.
+# The input is the directory where the results of chimCT were stored and the sample name.
+# Outputs are the 4 file describing the chimeras and the spanning reads fasta file.
 
-import argparse, re, os
+import argparse, sys, re, os
 from collections import OrderedDict
 from subprocess import *
 
@@ -15,6 +15,25 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-i', dest='input')
 parser.add_argument('-n', dest='sample_name')
 options = parser.parse_args()
+
+# Checking the parameters
+if not options.input.startswith('/'):
+    print 'The directory specified must be with an absolute path. Aborting.'
+    sys.exit()
+
+if not os.path.isdir(options.input):
+    print "The parameter '-i', "+options.input+" is not a directory. Aborting."
+    sys.exit()
+
+# Creating the directory to store result files
+directory = options.sample_name+'_processed.dir'
+if not os.path.exists(directory):
+    os.makedirs(directory)
+    os.chdir(directory)
+    os.getcwd()
+else:
+    print 'The directory '+directory+' already exists. Aborting.'
+    sys.exit()
 
 ###### Functions
 
@@ -142,7 +161,7 @@ for line in translocation_file:
 translocation_file.close()
 
 # Processing chimCT output
-input = open(options.input,'r')
+input = open(options.input+'/file.chim.txt','r')
 chim = {}
 noFeat = []
 for line in input:
@@ -185,12 +204,6 @@ for line in input:
 input.close()
 
 # Opening output files
-"""
-noFeat_file = open('file.noFeat.xls','w')
-oneFeat_file = open('file.oneFeat.xls','w')
-monoFeat_file = open('file.monoFeat.xls','w')
-twoFeat_file = open('file.twoFeat.xls','w')
-"""
 noFeat_file = open(options.sample_name+'.noFeat.xls','w')
 oneFeat_file = open(options.sample_name+'.oneFeat.xls','w')
 monoFeat_file = open(options.sample_name+'.monoFeat.xls','w')
