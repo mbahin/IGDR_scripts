@@ -6,7 +6,7 @@
 # The input is the directory where the results of chimCT were stored and the sample name.
 # Outputs are the 4 file describing the chimeras and the spanning reads fasta file.
 
-import argparse, sys, re, os
+import argparse, sys, shutil, re, os
 from collections import OrderedDict
 from subprocess import *
 
@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-i', dest='input')
 parser.add_argument('-n', dest='sample_name')
 options = parser.parse_args()
+options.input = options.input.rstrip('/')
 
 # Checking the parameters
 if not options.input.startswith('/'):
@@ -31,6 +32,7 @@ if not os.path.exists(directory):
     os.makedirs(directory)
     os.chdir(directory)
     os.getcwd()
+    shutil.copy(options.input+'/'+options.sample_name+'.fa','.')
 else:
     print 'The directory '+directory+' already exists. Aborting.'
     sys.exit()
