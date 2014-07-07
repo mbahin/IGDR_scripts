@@ -6,9 +6,15 @@
 # The input is the chimera file produced by chimCT.
 # Outputs are the 4 file describing the chimeras.
 
-import sys, re, os
+import argparse, re, os
 from collections import OrderedDict
 from subprocess import *
+
+# Getting options back
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', dest='input')
+parser.add_argument('-n', dest='sample_name')
+options = parser.parse_args()
 
 ###### Functions
 
@@ -136,7 +142,7 @@ for line in translocation_file:
 translocation_file.close()
 
 # Processing chimCT output
-input = open(sys.argv[1],'r')
+input = open(options.input,'r')
 chim = {}
 noFeat = []
 for line in input:
@@ -179,10 +185,16 @@ for line in input:
 input.close()
 
 # Opening output files
+"""
 noFeat_file = open('file.noFeat.xls','w')
 oneFeat_file = open('file.oneFeat.xls','w')
 monoFeat_file = open('file.monoFeat.xls','w')
 twoFeat_file = open('file.twoFeat.xls','w')
+"""
+noFeat_file = open(options.sample_name+'.noFeat.xls','w')
+oneFeat_file = open(options.sample_name+'.oneFeat.xls','w')
+monoFeat_file = open(options.sample_name+'.monoFeat.xls','w')
+twoFeat_file = open(options.sample_name+'.twoFeat.xls','w')
 
 # Writing the file for chimera with 2 unmatched parts
 noFeat_file.write('\t'.join(('nb spanning reads','nb spanning PE','class','chr1:pos1,strand1','chr2:pos2,strand2','warning'))+'\n')
