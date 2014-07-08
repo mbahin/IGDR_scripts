@@ -17,13 +17,13 @@ do
 done
 
 # Checking the parameters
-#if [[ -s "$output_file" ]]; then
-	#echo "There is already a non-empty file with the output filename provided. Aborting."
-	#exit 1
-#fi
+if [[ -s "$output_file" ]]; then
+	echo "Warning: There is already a non-empty file with the output filename provided."
+fi
 
-# Getting the sequences
+# Getting the sequence ids
 feat1=$(echo $breakpoint | sed 's|^(\([^:]*\):\([^,]*\),.*|\1@-?1@\2|g')
 feat2=$(echo $breakpoint | sed 's|^.*/ \([^:]*\):\([^,]*\),.*|\1@-?1@\2|g')
 
+# Building the output file
 egrep -A 1 "$feat1" $fasta_file | egrep -A 1 "$feat2" >> $output_file
