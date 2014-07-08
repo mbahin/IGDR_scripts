@@ -18,5 +18,5 @@ new=$3
 # List files and directories and move them
 for f in $(find $root -depth -name "*$old" -o -name "*$old[^0-9]*"); do
 	new_path=$(echo $f | sed "s|\(.*\)/\(.*\)$old\(.*\)|\1/\2$new\3|g")
-	echo "mv $f $new_path"
+	mv $f $new_path
 done
