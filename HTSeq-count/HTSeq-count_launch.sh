@@ -2,6 +2,9 @@
 #$ -m bea
 #$ -cwd
 
+# Template command to launch the script
+#qsub ~/HTSeq-count/HTSeq-count_launch.sh -i file.bam -g file.gtf -afso
+
 # Sourcing environment(s)
 . /local/env/envsamtools.sh
 . /local/env/envpython-2.7.sh
@@ -44,7 +47,6 @@ do
 		g) gtf=$OPTARG;;
 		a) already_sorted=TRUE;;
 		f) format_bam=TRUE;;
-		#a) already_sorted=TRUE;;
 		r) order_pos=TRUE;;
 		n) nonstranded=TRUE;;
 		s) stranded_reverse=TRUE;;
@@ -67,12 +69,12 @@ if [[ ("$stranded_reverse" == TRUE) && ("$nonstranded" == TRUE) ]]; then
 fi
 
 # Creating a directory for the job
-rep=$(basename $input .bam)
-if [[ ! -d "$rep.dir" ]]; then
-	mkdir $rep.dir
-	cd $rep.dir
+rep=$(basename $(echo $input | sed 's/readname_order.//g') .bam)
+if [[ ! -d "${rep}_count.dir" ]]; then
+	mkdir ${rep}_count.dir
+	cd ${rep}_count.dir
 else
-	echo "Directory $rep already exists. Aborting."
+	echo "Directory ${rep}_count already exists. Aborting."
 	exit
 fi
 
@@ -145,4 +147,4 @@ else
 fi
 
 # Cleaning files
-rm -f $input $input_SE $input_PE file.tmp $count_SE $count_PE
+rm -f $input_SE $input_PE file.tmp $count_SE $count_PE
