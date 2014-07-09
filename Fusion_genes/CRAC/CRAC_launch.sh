@@ -25,14 +25,12 @@
 index=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/Index/dogIndex
 kmer=22
 #paired_end=TRUE
-#output=pairs.sam
-output=pairs.bam
 stringent_chimera=FALSE
 noAmbiguity=FALSE
 stranded=FALSE;
 detailed_sam=FALSE
 #while getopts "c:i:k:r:s:po:uvdt:" OPTION
-while getopts "i:k:r:s:ou:nvdt:" OPTION
+while getopts "i:k:r:s:unvdt:" OPTION
 do
 	case $OPTION in
 		#d) directory=$OPTARG;;
@@ -41,7 +39,6 @@ do
         r) reads1=$OPTARG;;
         s) reads2=$OPTARG;;
         #p) paired_end=FALSE;;
-        o) output=$OPTARG;;
         u) stringent_chimera=TRUE;;
         n) noAmbiguity=TRUE;;
         v) stranded=TRUE;;
@@ -51,10 +48,6 @@ do
 done
 
 # Checking parameters
-#if [[ ! ("$output" =~ .sam$) ]]; then
-	#echo "The output filename must be a SAM file ('.sam' extension). Aborting."
-	#exit 1
-#fi
 #if [[ "$paired_end" == FALSE && -n $reads2 ]]; then
 #	echo "Single-end mode chosen (option '-e') but second read file given (option '-s'). Aborting."
 #	exit 1
@@ -67,7 +60,7 @@ done
 
 
 # Creating a directory for the job
-rep=$(basename $reads1 '_R1.paired.trim.fastq.gz')_CRAC
+rep=$(basename $reads1 '_R1.trim.fastq.gz')_CRAC
 if [[ ! -d "$rep.dir" ]]; then
 	mkdir $rep.dir
 	cd $rep.dir
@@ -79,7 +72,6 @@ fi
 # Printing script metadata
 log=file.log
 echo -e "Date: "$(date)"\n" > file.log
-#echo -e "Original command line:\nCRAC_script.sh -i $index -k $kmer -r $reads1 $reads2 -o $output --summary summary.output --chimera chimera.output\n" >> file.log
 echo -e "Index:\n$index" >> file.log
 #if [[ "$paired_end" == TRUE ]]; then
 #	echo -e "\nRead file (R1):\n$reads1\n" >> file.log
@@ -98,7 +90,7 @@ command="crac -i $index -k $kmer -r $reads1"
 if [[ -n "$reads2" ]]; then
 	command=$command" $reads2"
 fi
-if [[ "$stringent" == TRUE ]]; then
+if [[ "$stringent_chimera" == TRUE ]]; then
 	command=$command' --stringent-chimera'
 fi
 if [[ "$noAmbiguity" == TRUE ]]; then
@@ -113,12 +105,6 @@ fi
 if [[ -n "$threads" ]]; then
 	command=$command" --nb-threads $threads"
 fi
-#command=$command" -o $output --summary summary.output --chimera chimera.output"
-#command=$command" -o $output --summary summary.output"
 command=$command" -o- --summary summary.output"
 echo -e "\nOriginal command line:\n$command" >> file.log
 $command | samtools view -Sbh -  > $output
-
-# Creating a BAM output if necessary
-#samtools view -bSh $output > $(basename $output .sam).bam 2> /dev/null
-#rm $output
