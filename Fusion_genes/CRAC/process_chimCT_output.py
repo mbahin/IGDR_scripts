@@ -12,8 +12,9 @@ from subprocess import *
 
 # Getting options back
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', dest='input')
+parser.add_argument('-d', dest='input')
 parser.add_argument('-n', dest='sample_name')
+parser.add_argument('-s', dest='single_end', action='store_true')
 options = parser.parse_args()
 options.input = options.input.rstrip('/')
 
@@ -23,7 +24,7 @@ if not options.input.startswith('/'):
     sys.exit()
 
 if not os.path.isdir(options.input):
-    print "The parameter '-i', "+options.input+" is not a directory. Aborting."
+    print "The parameter '-d', "+options.input+" is not a directory. Aborting."
     sys.exit()
 
 # Creating the directory to store result files
@@ -78,7 +79,10 @@ def write_res(file,one_feat):
     # Function to write the information relative to a line in the chimera file from chimCT into the result files.
     #####
 
-    file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),str(orderedChim[chim]['spP']),str(orderedChim[chim]['class'])))+'\t')
+    if options.single_end == False:
+        file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),str(orderedChim[chim]['spP']),str(orderedChim[chim]['class'])))+'\t')
+    else:
+        file.write(chim+'\t'+'\t'.join((str(orderedChim[chim]['spR']),'NA',str(orderedChim[chim]['class'])))+'\t')
     breakpoints = []
     for pos in orderedChim[chim]['breakpoint']:
         breakpoints.append('('+str(pos[0])+':'+str(pos[1])+','+str(pos[2])+' / '+str(pos[3])+':'+str(pos[4])+','+str(pos[5])+' # '+str(pos[6])+','+str(pos[7])+')')
@@ -173,7 +177,10 @@ for line in input:
     (chimID,chr1,end1,strand1,chr2,start2,strand2) = (line.split('\t')[1:8])
     (chimClass,warnings) = (line.split('\t')[11:13])
     spR = re.match(r'Nb_spanning_reads=(.*)',line.split('\t')[21]).group(1)
-    spP = re.match(r'Nb_spanning_PE=(.*)',line.rstrip().split('\t')[22]).group(1)
+    if options.single_end == False:
+        spP = re.match(r'Nb_spanning_PE=(.*)',line.rstrip().split('\t')[22]).group(1)
+    else:
+        spP = 'NA'
     if chimClass == '4':
         continue
     match = re.match(r'FusionDistance=([^,]*)',warnings)
@@ -190,13 +197,17 @@ for line in input:
     if not chim.has_key(chimID):
         chim[chimID] = {}
         chim[chimID]['spR'] = 0
-        chim[chimID]['spP'] = 0
+        if options.single_end == False:
+            chim[chimID]['spP'] = 0
+        else:
+            spP = 'NA'
         chim[chimID]['class'] = chimClass
         chim[chimID]['breakpoint'] = []
         chim[chimID]['warnings'] = []
     # Commands executed for each processed line
     chim[chimID]['spR'] += int(spR)
-    chim[chimID]['spP'] += int(spP)
+    if options.single_end == False:
+        chim[chimID]['spP'] += int(spP)
     chim[chimID]['warnings'].append(warn)
     #if not chim[chimID]['breakpoint'].has_key(chimClass):
         #chim[chimID]['breakpoint'][chimClass] = []
