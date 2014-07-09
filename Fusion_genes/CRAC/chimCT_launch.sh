@@ -53,7 +53,7 @@ fi
 command="$chimCT -s $sam -n $sample_name --summary summary.txt --conf $conf"
 
 if [[ "$spanning_reads" == TRUE ]]; then
-	command=$command' --spanning-reads spanR'
+	command=$command' --spanning-reads '$sample_name
 fi
 if [[ "$keep_ig" == TRUE ]]; then
 	command=$command' --keep-ig'
