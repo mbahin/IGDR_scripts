@@ -14,13 +14,15 @@ from subprocess import *
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', dest='input')
 parser.add_argument('-n', dest='sample_name')
+parser.add_argument('-c', dest='crac_dir')
 parser.add_argument('-s', dest='single_end', action='store_true')
 options = parser.parse_args()
 options.input = options.input.rstrip('/')
+options.crac_dir = options.crac_dir.rstrip('/')
 
 # Checking the parameters
-if not options.input.startswith('/'):
-    print 'The directory specified must be with an absolute path. Aborting.'
+if (not options.input.startswith('/')) or (not options.crac_dir.startswith('/')):
+    print 'The directories specified must be absolute pathes. Aborting.'
     sys.exit()
 
 if not os.path.isdir(options.input):
@@ -33,7 +35,6 @@ if not os.path.exists(directory):
     os.makedirs(directory)
     os.chdir(directory)
     os.getcwd()
-    shutil.copy(options.input+'/'+options.sample_name+'.fa','.')
 else:
     print 'The directory '+directory+' already exists. Aborting.'
     sys.exit()
@@ -271,3 +272,7 @@ noFeat_file.close()
 oneFeat_file.close()
 monoFeat_file.close()
 twoFeat_file.close()
+
+# Creating symbolic links to the spanning split reads fasta file and to the CRAC output directory of the analyse
+os.symlink(options.input+'/'+options.sample_name+'.fa','link_to_spanning_spmit_reads_fasta.ln')
+os.symlink(options.crac_dir,'link_to_BAM_files_directory.ln')
