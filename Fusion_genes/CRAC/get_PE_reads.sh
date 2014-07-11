@@ -7,8 +7,9 @@
 # The output is fasta file.
 
 # Getting options back
-directory=Breakpoint_reads
-while getopts "d:f:a:b:g:h:" OPTION
+directory=Spanning_reads
+total=FALSE
+while getopts "d:f:a:b:g:h:t" OPTION
 do
 	case $OPTION in
     	d) directory=$OPTARG;;
@@ -17,6 +18,7 @@ do
     	b) bkpt=$OPTARG;;
     	g) feat1=$OPTARG;;
     	h) feat2=$OPTARG;;
+    	t) total=TRUE;;
     esac
 done
 
@@ -29,11 +31,16 @@ if [[ -z $fasta_file || -z $alignments_dir ||-z $bkpt ]]; then
 fi
 
 # Creating a directory for the job
-if [[ ! -d "$directory" ]]; then
-	mkdir $directory.dir
-	cd $directory.dir
+if [[ "$total" == FALSE ]]; then
+	dir_name=$directory.bkpt.dir
 else
-	echo "Directory $directory already exists. Aborting."
+	dir_name=$directory.full_feat.dir
+fi
+if [[ ! -d "$dir_name" ]]; then
+	mkdir $dir_name
+	cd $dir_name
+else
+	echo "Directory $dir_name already exists. Aborting."
 	exit 1
 fi
 
@@ -71,38 +78,43 @@ mv file.tmp spanning_split_reads.fasta
 # Getting the paired-end reads around the breakpoint
 #####
 
-echo "##### Getting the paired-end reads around the breakpoint"
-
 # Getting the matched features terminals
 echo "Getting the matched features terminals..."
 rloc1=$(grep $feat1 $GFFv3 | awk '$3 == "mRNA"' | cut -f9 | cut -f2 -d';' | cut -f2 -d'=' | sort | uniq)
 rloc2=$(grep $feat2 $GFFv3 | awk '$3 == "mRNA"' | cut -f9 | cut -f2 -d';' | cut -f2 -d'=' | sort | uniq)
+feat1_beg=$(grep $rloc1 $GFFv3 | awk '$3 == "gene"'| cut -f4)
+feat1_end=$(grep $rloc1 $GFFv3 | awk '$3 == "gene"'| cut -f5)
+feat2_beg=$(grep $rloc2 $GFFv3 | awk '$3 == "gene"'| cut -f4)
+feat2_end=$(grep $rloc2 $GFFv3 | awk '$3 == "gene"'| cut -f5)
 
-# Creating a BEDPE file for the extended area around the breakpoint within the two features matched
-if [[ "$strand1" == "1" ]]; then
-	feat1_beg=$(grep $rloc1 $GFFv3 | awk '$3 == "gene"'| cut -f4)
-	bkpt_bedpe="$chr1\t$feat1_beg\t$end1\t$chr2\t"
+if [[ "$total" == FALSE ]]; then
+	echo "##### Getting the paired-end reads around the breakpoint"
+
+	# Creating a BEDPE file for the extended area around the breakpoint within the two features matched
+	if [[ "$strand1" == "1" ]]; then
+		one_line_bedpe="$chr1\t$feat1_beg\t$end1\t$chr2\t"
+	else
+		one_line_bedpe="$chr1\t$end1\t$feat1_end\t$chr2\t"
+	fi
+	if [[ "$strand2" == "1" ]]; then
+		one_line_bedpe=$one_line_bedpe"$start2\t$feat2_end\tfusion_bkpt\t0\t.\t."
+	else
+		one_line_bedpe=$one_line_bedpe"$feat2_beg\t$start2\tfusion_bkpt\t0\t.\t."
+	fi
 else
-	feat1_end=$(grep $rloc1 $GFFv3 | awk '$3 == "gene"'| cut -f5)
-	bkpt_bedpe="$chr1\t$end1\t$feat1_end\t$chr2\t"
+	one_line_bedpe="$chr1\t$feat1_beg\t$feat1_end\t$chr2\t$feat2_beg\t$feat2_end\tfusion_bkpt\t0\t.\t."
 fi
-if [[ "$strand2" == "1" ]]; then
-	feat2_end=$(grep $rloc2 $GFFv3 | awk '$3 == "gene"'| cut -f5)
-	bkpt_bedpe=$bkpt_bedpe"$start2\t$feat2_end\tfusion_bkpt\t0\t.\t."
-else
-	feat2_beg=$(grep $rloc2 $GFFv3 | awk '$3 == "gene"'| cut -f4)
-	bkpt_bedpe=$bkpt_bedpe"$feat2_beg\t$start2\tfusion_bkpt\t0\t.\t."
-fi
-echo -e $bkpt_bedpe > bkpt.full_gene.bedpe
+
+echo -e $one_line_bedpe > file.bedpe
 
 # Reducing the alignment file only on the concerned chromosomes
-#awk -v chr1=$chr1 -v chr2=$chr2 '$1 == chr1 && $4 == chr2' $alignments_dir/*.bedpe > file.primary_alignment.good_chr.bedpe
+awk -v chr1=$chr1 -v chr2=$chr2 '$1 == chr1 && $4 == chr2' $alignments_dir/*.bedpe > file.primary_alignment.good_chr.bedpe
 # Small for test
-awk -v chr1=$chr1 -v chr2=$chr2 '$1 == chr1 && $4 == chr2' /home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/CRAC/Get_reads/Mini_test/small.bedpe > file.primary_alignment.good_chr.bedpe
+#awk -v chr1=$chr1 -v chr2=$chr2 '$1 == chr1 && $4 == chr2' /home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/CRAC/Get_reads/Mini_test/small.bedpe > file.primary_alignment.good_chr.bedpe
 
 # Doing a pairToPair between the BEDPE file about the breakpoint and the alignment file
 echo "Intersecting the read pairs files..."
-pairToPair -is -a bkpt.full_gene.bedpe -b file.primary_alignment.good_chr.bedpe > file.pairToPair.output
+pairToPair -is -a file.bedpe -b file.primary_alignment.good_chr.bedpe > file.pairToPair.output
 
 # Getting read IDs
 cut -f17 file.pairToPair.output > file.readID.txt
@@ -114,9 +126,9 @@ pat=$(echo $pat | sed 's/^\(.*\)|$/\1/g')
 
 # Getting the BAM lines
 echo "Getting the matching BAM lines..."
-#samtools view $alignments_dir/pairs.primary_alignment.bam | egrep "$pat" > spanning_PE.sam
+samtools view $alignments_dir/pairs.primary_alignment.bam | egrep "$pat" > spanning_PE.sam
 # Small for test
-samtools view /home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/CRAC/Get_reads/Mini_test/small.bam | egrep "$pat" > spanning_PE.sam
+#samtools view /home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/CRAC/Get_reads/Mini_test/small.bam | egrep "$pat" > spanning_PE.sam
 
 # Outputting a fasta file
 echo "Formatting the output fasta file..."
@@ -128,5 +140,5 @@ while read line; do
 done < spanning_PE.sam
 
 # Cleaning directory
-rm bkpt.full_gene.bedpe file.pairToPair.output file.primary_alignment.good_chr.bedpe file.readID.txt spanning_PE.sam
+rm file.bedpe file.pairToPair.output file.primary_alignment.good_chr.bedpe file.readID.txt spanning_PE.sam
 echo "Done."
