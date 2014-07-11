@@ -25,6 +25,7 @@
 index=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/Index/dogIndex
 kmer=22
 #paired_end=TRUE
+output=pairs.bam
 stringent_chimera=FALSE
 noAmbiguity=FALSE
 stranded=FALSE;
@@ -57,10 +58,12 @@ done
 #	exit 1
 #fi
 
-
-
 # Creating a directory for the job
-rep=$(basename $reads1 '_R1.trim.fastq.gz')_CRAC
+if [[ "$stringent_chimera" == TRUE ]]; then
+	rep=$(basename $reads1 '_R1.trim.fastq.gz')_stringent_CRAC
+else
+	rep=$(basename $reads1 '_R1.trim.fastq.gz')_CRAC
+fi
 if [[ ! -d "$rep.dir" ]]; then
 	mkdir $rep.dir
 	cd $rep.dir
@@ -108,3 +111,7 @@ fi
 command=$command" -o- --summary summary.output"
 echo -e "\nOriginal command line:\n$command" >> file.log
 $command | samtools view -Sbh -  > $output
+
+# Creating the BAM and BEDPE file with only the primary alignments (used by the script to get the paired-end reads around a breakpoint)
+samtools view -hb -F 0x800 $output > pairs.primary_alignment.bam
+bamToBed -bedpe -i pairs.primary_alignment.bam > pairs.primary_alignment.bedpe
