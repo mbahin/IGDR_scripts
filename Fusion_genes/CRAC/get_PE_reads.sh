@@ -6,6 +6,10 @@
 # Inputs are a fasta output file from chimCT, a breakpoint coordinates (e.g. "(15:60179225,1 / X:35772912,1 # 50,62)") and an output filename.
 # The output is fasta file.
 
+# Sourcing python environment
+. /local/env/envsamtools.sh
+. /local/env/envbedtools-2.19.0.sh
+
 # Getting options back
 directory=Spanning_reads
 total=FALSE
@@ -29,6 +33,10 @@ if [[ -z $fasta_file || -z $alignments_dir ||-z $bkpt ]]; then
 	echo "Fasta file (option '-f'), alignments file directory (option '-a') and the breakpoint (option '-b') are mandatory. Please provide them. Aborting."
 	exit 1
 fi
+#if [[ (-n $feat1 || -n $feat2 ) && -n $total ]]; then
+#	echo "Feature given (option '-g' and/or '-h') but full gene mode chosen (option '-t'). Aborting."
+#	exit 1
+#fi
 
 # Creating a directory for the job
 if [[ "$total" == FALSE ]]; then
@@ -79,7 +87,6 @@ mv file.tmp spanning_split_reads.fasta
 #####
 
 # Getting the matched features terminals
-echo "Getting the matched features terminals..."
 rloc1=$(grep $feat1 $GFFv3 | awk '$3 == "mRNA"' | cut -f9 | cut -f2 -d';' | cut -f2 -d'=' | sort | uniq)
 rloc2=$(grep $feat2 $GFFv3 | awk '$3 == "mRNA"' | cut -f9 | cut -f2 -d';' | cut -f2 -d'=' | sort | uniq)
 feat1_beg=$(grep $rloc1 $GFFv3 | awk '$3 == "gene"'| cut -f4)
@@ -134,7 +141,7 @@ samtools view $alignments_dir/pairs.primary_alignment.bam | egrep "$pat" > spann
 echo "Formatting the output fasta file..."
 i=0
 while read line; do
-	echo $(echo $line | cut -f1 -d' ')"/"$(($i % 2 + 1)) >> spanning_PE_reads.fasta
+	echo '>'$(echo $line | cut -f1 -d' ')'/'$(($i % 2 + 1)) >> spanning_PE_reads.fasta
 	echo $(echo $line | cut -f10 -d' ') >> spanning_PE_reads.fasta
 	i=$(($i + 1))
 done < spanning_PE.sam
