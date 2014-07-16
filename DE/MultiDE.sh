@@ -39,7 +39,7 @@ if [[ -z $counts || -z $factors ]]; then
 	echo "Counts file (option '-c') and factors file (option '-f') are mandatory. Please provide them. Aborting."
 	exit 1
 fi
-if [[ ! ("$mode" != 'de' || "$mode" != 'ed' || "$mode" != 'e' || "$mode" != 'd') ]]; then
+if [[ ! ("$mode" != 'de' || "$mode" != 'ed' || "$mode" != 'e' || "$mode" != 'd') ]]; then
 	echo $mode
 	echo "The mode should be 'de' (or 'ed'), 'd' or 'e'. Aborting."
 	exit 1

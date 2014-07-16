@@ -1,4 +1,7 @@
+#!/local/python/2.7/bin/python
+
 # Mathieu Bahin, 04/04/14
+# Last update: 16/07/14
 
 import argparse
 
@@ -19,7 +22,9 @@ for line in DESeq2_file:
     if not index.has_key(xloc):
         index[xloc] = {}
     index[xloc]['DESeq2_score'] = line.rstrip().split(',')[-1]
-    if float(line.split(',')[2]) >= 0:
+    if line.split(',')[2] == 'NA':
+        index[xloc]['DESeq2_fc'] = 'NA'
+    elif float(line.split(',')[2]) >= 0:
         index[xloc]['DESeq2_fc'] = 'up'
     else:
         index[xloc]['DESeq2_fc'] = 'down'
@@ -57,7 +62,7 @@ cancer_known = 0
 for xloc in index:
     scores_file.write(xloc)
     venn_file.write(xloc)
-    if index[xloc].has_key('DESeq2_score') and (index[xloc]['DESeq2_score'] != 'NA'):
+    if index[xloc].has_key('DESeq2_score') and (index[xloc]['DESeq2_score'] != 'NA') and (index[xloc]['DESeq2_fc'] != 'NA'):
         scores_file.write(','+index[xloc]['DESeq2_score'])
         venn_file.write(','+str(int(float(index[xloc]['DESeq2_score']) <= threshold)))
     else:
@@ -89,5 +94,3 @@ print 'DE gene(s) found:', DE_genes
 print '\tUp-regulated gene(s):', upreg
 print '\tDown-regulated gene(s):', downreg
 print '\tAmbiguously regulated gene(s):', ambiguous
-
-#print 'DE gene(s) found:', sum(1 for xloc in index.keys() if ((index[xloc].has_key('edgeR_score')) and (float(index[xloc]['edgeR_score']) <= threshold) and (index[xloc].has_key('DESeq2_score')) and (index[xloc]['DESeq2_score'] != 'NA') and (float(index[xloc]['DESeq2_score']) <= threshold)))
