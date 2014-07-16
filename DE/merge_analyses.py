@@ -12,22 +12,31 @@ parser.add_argument('-d', dest='DESeq2_file')
 parser.add_argument('-e', dest='edgeR_file')
 options = parser.parse_args()
 
-index = {}
+# Indexing the RLOCs index
+RLOCs_file = open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r')
+RLOCs_index = {}
+for line in RLOCs_file:
+    rloc = line.split('\t')[0]
+    if not RLOCs_index.has_key(rloc):
+        RLOCs_index[rloc] = {}
+    RLOCs_index[rloc]['enscafg'] = line.split('\t')[1].split(',')
+
+results = {}
 
 # Indexing the DESeq2 results
 DESeq2_file = open(options.DESeq2_file,'r')
 DESeq2_file.readline()
 for line in DESeq2_file:
     xloc = line.split(',')[0].split('"')[1]
-    if not index.has_key(xloc):
-        index[xloc] = {}
-    index[xloc]['DESeq2_score'] = line.rstrip().split(',')[-1]
+    if not results.has_key(xloc):
+        results[xloc] = {}
+    results[xloc]['DESeq2_score'] = line.rstrip().split(',')[-1]
     if line.split(',')[2] == 'NA':
-        index[xloc]['DESeq2_fc'] = 'NA'
+        results[xloc]['DESeq2_fc'] = 'NA'
     elif float(line.split(',')[2]) >= 0:
-        index[xloc]['DESeq2_fc'] = 'up'
+        results[xloc]['DESeq2_fc'] = 'up'
     else:
-        index[xloc]['DESeq2_fc'] = 'down'
+        results[xloc]['DESeq2_fc'] = 'down'
 DESeq2_file.close()
 
 # Indexing the edgeR results
@@ -35,13 +44,13 @@ edgeR_file = open(options.edgeR_file,'r')
 edgeR_file.readline()
 for line in edgeR_file:
     xloc = line.split(',')[0].split('"')[1]
-    if not index.has_key(xloc):
-        index[xloc] = {}
-    index[xloc]['edgeR_score'] = line.rstrip().split(',')[-1]
+    if not results.has_key(xloc):
+        results[xloc] = {}
+    results[xloc]['edgeR_score'] = line.rstrip().split(',')[-1]
     if float(line.split(',')[1]) >= 0:
-        index[xloc]['edgeR_fc'] = 'up'
+        results[xloc]['edgeR_fc'] = 'up'
     else:
-        index[xloc]['edgeR_fc'] = 'down'
+        results[xloc]['edgeR_fc'] = 'down'
 edgeR_file.close()
 
 # Producing the scores and venn files
@@ -59,30 +68,34 @@ ambiguous = 0
 cancer_known = 0
 #biotypes
 
-for xloc in index:
+for xloc in results:
     scores_file.write(xloc)
     venn_file.write(xloc)
-    if index[xloc].has_key('DESeq2_score') and (index[xloc]['DESeq2_score'] != 'NA') and (index[xloc]['DESeq2_fc'] != 'NA'):
-        scores_file.write(','+index[xloc]['DESeq2_score'])
-        venn_file.write(','+str(int(float(index[xloc]['DESeq2_score']) <= threshold)))
+    if results[xloc].has_key('DESeq2_score') and (results[xloc]['DESeq2_score'] != 'NA') and (results[xloc]['DESeq2_fc'] != 'NA'):
+        scores_file.write(','+results[xloc]['DESeq2_score'])
+        venn_file.write(','+str(int(float(results[xloc]['DESeq2_score']) <= threshold)))
     else:
         scores_file.write(',NA')
         venn_file.write(',0')
-    if index[xloc].has_key('edgeR_score'):
-        scores_file.write(','+index[xloc]['edgeR_score']+'\n')
-        venn_file.write(','+str(int(float(index[xloc]['edgeR_score']) <= threshold))+'\n')
+    if results[xloc].has_key('edgeR_score'):
+        scores_file.write(','+results[xloc]['edgeR_score']+'\n')
+        venn_file.write(','+str(int(float(results[xloc]['edgeR_score']) <= threshold))+'\n')
         # Producing the DE gene list
-        if (float(index[xloc]['edgeR_score']) <= threshold) and (index[xloc].has_key('DESeq2_score')) and (index[xloc]['DESeq2_score'] != 'NA') and (float(index[xloc]['DESeq2_score']) <= threshold):
+        if (float(results[xloc]['edgeR_score']) <= threshold) and (results[xloc].has_key('DESeq2_score')) and (results[xloc]['DESeq2_score'] != 'NA') and (float(results[xloc]['DESeq2_score']) <= threshold):
             DE_genes += 1
-            if (index[xloc]['DESeq2_fc'] == index[xloc]['edgeR_fc']) and (index[xloc]['DESeq2_fc'] == 'up'):
+            if RLOCs_index.has_key(xloc):
+                enscafg = ','.join((RLOCs_index[xloc]['enscafg']))
+            else:
+                enscafg = 'No_ENSCAFG'
+            if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
-                gene_id_file.write(xloc+'\tUp-regulated\n')
-            elif (index[xloc]['DESeq2_fc'] == index[xloc]['edgeR_fc']) and (index[xloc]['DESeq2_fc'] == 'down'):
+                gene_id_file.write(xloc+'\t'+str(enscafg)+'\tUp-regulated\n')
+            elif (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'down'):
                 downreg += 1
-                gene_id_file.write(xloc+'\tDown-regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafg)+'\tDown-regulated\n')
             else:
                 ambiguous += 1
-                gene_id_file.write(xloc+'\tambiguously regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafg)+'\tambiguously regulated\n')
     else:
         scores_file.write(',NA\n')
         venn_file.write(',0\n')
