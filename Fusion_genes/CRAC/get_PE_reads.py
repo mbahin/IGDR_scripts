@@ -3,9 +3,19 @@
 # Mathieu Bahin, 12/06/14
 # Last update: 18/07/14
 
-# Script to get the sequences involved in a breakpoint from a fasta file produced by chimCT
-# Inputs are a fasta output file from chimCT, a breakpoint coordinates (e.g. "(15:60179225,1 / X:35772912,1 # 50,62)") and an output filename.
-# The output is fasta file.
+# Script to get the split reads involved in and the paired-end reads around a breakpoint from files produced by CRAC.
+# Inputs:
+#   - a directory name where the results will be stored (option '-d', default is 'Spanning_reads')
+#   - a directory with the results of the script 'process_chimCT_output.py' (option '-p', required)
+#   - a breakpoint coordinates (e.g. "(15:60179225,1 / X:35772912,1 # 50,62)") (option '-b')
+#   - a first feature (option '-f', required)
+#   - a second feature (option '-g', required)
+#   - a nucleotidic distance (option '-n')
+#   - a flag for full feature mode (option '-t')
+# If the mode 'full feature' is chosen, then all the paired-end reads with one mate on the first feature and the second mate on the second feature are retrieved. Otherwise, only the paired-end reads with one mate around the breakpoint are retrieved. If a feature is unknown, then, a kpb distance should be provided to search around the breakpoint.
+# The output are:
+#   - spanning_split_reads.fasta: a fasta file with the split reads (if 'full feature' mode is not chosen)
+#   - spanning_PE_reads.fasta: a fasta file with the paired-end reads around the breakpoint or the paired-end reads for the 2 features (if 'full feature' mode is chosen)
 
 import os, argparse, sys, re, shutil
 
@@ -66,6 +76,7 @@ def get_fasta(sense):
 
 # Setting the environment
 os.system('. /local/env/envsamtools.sh')
+os.system('. /local/env/envcap3.sh')
 GFF = '/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
 
 # Getting options back
@@ -96,7 +107,6 @@ else:
 if not os.path.exists(dir_name):
     os.makedirs(dir_name)
     os.chdir(dir_name)
-    os.getcwd()
 else:
     print 'The directory '+dir_name+' already exists. Aborting.'
     sys.exit()
@@ -142,7 +152,7 @@ if not options.total:
 # Getting the paired-end reads around the breakpoint
 #####
 
-# Indexing the GFF file
+# Indexing the GFF file to get the correspondance between RLOCs and features and the features terminals
 GFF_file = open(GFF,'r')
 feat_index = {}
 rloc_index = {}
@@ -215,16 +225,34 @@ if options.total:
 # Getting a BAM file with paired-end reads in the area of interest
 print 'Searching reads within '+chr1+':'+feat1_beg+'-'+feat1_end+' and '+chr2+':'+feat2_beg+'-'+feat2_end
 
-# Getting fasta files for sense and reverse sense
+# Getting fasta files for sense and reverse sense fusions
 get_fasta(True)
 get_fasta(False)
 
-# Merging the two fasta files
+# Merging the sense and reverse fasta files
 spanning_PE_output = open('spanning_PE_reads.fasta','w')
 shutil.copyfileobj(open('output.fasta','r'), spanning_PE_output)
 shutil.copyfileobj(open('output.rev.fasta','r'), spanning_PE_output)
 spanning_PE_output.close()
 os.remove('output.fasta')
 os.remove('output.rev.fasta')
+
+#####
+# Making the contigs with CAP3
+#####
+
+# Creating a directory for contigs
+os.makedirs('Contigs')
+
+# Executing CAP3 command
+os.system('cap3 spanning_PE_reads.fasta > Contigs/file.log')
+
+# Renaming files and cleaning directory
+os.rename('spanning_PE_reads.fasta.cap.contigs','Contigs/PE_contigs.fasta')
+os.rename('spanning_PE_reads.fasta.cap.singlets','Contigs/PE_singlets.fasta')
+os.remove('spanning_PE_reads.fasta.cap.ace')
+os.remove('spanning_PE_reads.fasta.cap.contigs.links')
+os.remove('spanning_PE_reads.fasta.cap.contigs.qual')
+os.remove('spanning_PE_reads.fasta.cap.info')
 
 print '#####'
