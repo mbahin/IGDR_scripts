@@ -112,6 +112,8 @@ command=$command" -o- --summary summary.output"
 echo -e "\nOriginal command line:\n$command" >> file.log
 $command | samtools view -Sbh -  > $output
 
-# Creating the BAM and BEDPE file with only the primary alignments (used by the script to get the paired-end reads around a breakpoint)
+# Creating the sorted BAM and index file with only the primary alignments (used by the script to get the paired-end reads around a breakpoint)
 samtools view -hb -F 0x800 $output > pairs.primary_alignment.bam
-bamToBed -bedpe -i pairs.primary_alignment.bam > pairs.primary_alignment.bedpe
+samtools sort -o pairs.primary_alignment.bam sorting > pairs.primary_alignment.sort.bam
+rm pairs.primary_alignment.bam
+samtools index pairs.primary_alignment.sort.bam
