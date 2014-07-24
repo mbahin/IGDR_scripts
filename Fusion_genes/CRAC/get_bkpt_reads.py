@@ -248,7 +248,20 @@ os.makedirs('Contigs')
 os.system('cap3 spanning_PE_reads.fasta > Contigs/file.log')
 
 # Renaming files and cleaning directory
-os.rename('spanning_PE_reads.fasta.cap.contigs','Contigs/PE_contigs.fasta')
+contigs_file = open('spanning_PE_reads.fasta.cap.contigs', 'r')
+new_contigs_file = open('Contigs/PE_contigs.fasta','w')
+seq = ''
+for line in contigs_file:
+    if line.startswith('>'):
+        if seq != '':
+            new_contigs_file.write(seq+'\n')
+            seq = ''
+        new_contigs_file.write(line)
+    else:
+        seq = seq + line.rstrip()
+#os.rename('spanning_PE_reads.fasta.cap.contigs','Contigs/PE_contigs.fasta')
+new_contigs_file.close()
+contigs_file.close()
 os.rename('spanning_PE_reads.fasta.cap.singlets','Contigs/PE_singlets.fasta')
 os.remove('spanning_PE_reads.fasta.cap.ace')
 os.remove('spanning_PE_reads.fasta.cap.contigs.links')
