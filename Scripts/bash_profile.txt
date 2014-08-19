@@ -1,0 +1,98 @@
+#export PS1="\[\e[1;49;34m\][\u@\h \W $(date +%H:%M)]\$ \[\e[m\]" # With user
+export PS1="\e[1;34m[\h \e[1;32m\W\e[m \e[1;34m\A]\$ \e[m"
+
+# Aliases
+alias ls='ls'
+alias ll="ls -lhG --color"
+alias rm='rm -i'
+alias h='head -5'
+alias grep='grep --color=auto'
+
+# Grep colors
+export GREP_COLOR='1;33'
+
+# Softs path aliases
+alias qrsh128='qrsh -q sgi128g.q'
+alias htseq-count='/softs/local/python/2.7/bin/htseq-count'
+alias R='/softs/local/R/3.1.0/bin/R'
+alias Rscript='/softs/local/R/3.1.0/bin/Rscript'
+alias chimCT="$HOME/Fusion_genes/CRAC/chimCT/bin/chimCT"
+#alias qs="qstat -u '*' | sed 1d | sed 1d | tr -s ' ' | cut -f5 -d' ' | sort | uniq -c | sort -nr"
+alias qs="qstat -u '*' | sed 1d | sed 1d | awk '{print \$4'} | sort | uniq -c | sort -nr"
+alias col="awk '{if (NR % 2){printf \"\033[48;5;189m\"\$0\"\033[0m\n\"}else{print \$0}}'"
+#alias col="sed -e 'N;s/\(.*\)\n\(.*\)/\x1b[48;5;189m\1\x1b[0m\n\2/'"
+
+# Path aliases
+export DOG='/home/genouest/umr6061/recomgen/dog/mbahin'
+export GTFv2='/home/SAVE-OMAHA/tderrien/DATA/canFam3/annotation/MERGED_BROAD_RENNES_v2/merged_asm/merged.withStrand.gtf'
+#export GTFv3='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gtf'
+export GTFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gtf'
+#export GFFv3='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3'
+#export GFFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-23-2014.gff3'
+export GFFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
+export GTFv3_1='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gtf'
+export GFFv3_1='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gff'
+
+# Sourcing
+. /local/env/envpython-2.7.sh
+. /local/env/envsamtools.sh
+. /local/env/envperl-5.18.2.sh
+. /local/env/envcufflink-2.1.1.sh
+. /local/env/envgit-1.7.5.sh
+. /local/env/envcrac-1.5.0.sh
+. /local/env/envbedtools-2.19.0.sh
+
+# Perl Lib directory
+PERL5LIB=$HOME/perl
+PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5/
+PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/bin/perl/lib/
+PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/src/bioperl-1.2.3
+
+# Export lang
+export LC_CTYPE="en_US.UTF-8"
+export LANG="C"
+export LANGUAGE="en_US"
+export LC_ALL="en_US"
+
+# Adding thousands separators
+wl() {
+	# The function can be used alone with a parameter or within a piped command.
+	# It is not very good with several files, better use 'wc -l'.
+	if [[ $# -eq 0 ]]; then #Function called with a file as parameter
+		nb=$(wc -l)
+	elif [[ $# -eq 1 ]]; then #Function called within a piped command
+		nb=$(wc -l $1 | cut -f1 -d' ')
+	else #Function called with a list of file (not perfect)
+		echo $(wc -l $*) | sed 's/\([0-9]* [^ ]*\) \([0-9]* [^ ]*\)/\1\n\2/g' | sed 's/\([0-9]* [^ ]*\) \([0-9]* [^ ]*\)/\1\n\2/g'
+		return 0
+	fi
+
+	# Adding thousand separators within the line count number
+	new=''
+	for ((i=${#nb};i>0;i-=3)) do
+		if [[ $i -le 3 ]]; then #When there is still 3 figures or less
+			new=${nb:0:i}$new
+		else
+			new='.'${nb:$(($i-3)):3}$new
+		fi
+	done
+
+	# Printing the results
+	if [[ $# -eq 0 ]]; then
+		echo $new
+	else
+		echo $new $(wc -l $1 | cut -f2 -d' ')
+	fi
+}
+
+# Coloring man pages
+man() {
+    env LESS_TERMCAP_mb=$(printf "\e[1;34m") \
+    LESS_TERMCAP_md=$(printf "\e[1;34m") \
+    LESS_TERMCAP_me=$(printf "\e[0m") \
+    LESS_TERMCAP_se=$(printf "\e[0m") \
+    LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
+    LESS_TERMCAP_ue=$(printf "\e[0m") \
+    LESS_TERMCAP_us=$(printf "\e[1;32m") \
+    man "$@"
+}
