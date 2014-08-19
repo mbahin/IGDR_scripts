@@ -11,7 +11,11 @@
 
 # Defining the function launching HTSeq-count
 function launch {
-	command="htseq-count $1 $gtf"
+    if [[ "$transcript_mode" == TRUE ]]; then
+    	command="htseq-count -i transcript_id $1 $gtf"
+    else
+    	command="htseq-count $1 $gtf"
+    fi
 
 	# TEMPORARY
 	#if [[ "$order_pos" == TRUE ]]; then
@@ -36,11 +40,12 @@ function launch {
 already_sorted=FALSE # TEMPORARY
 format_bam=FALSE
 order_pos=FALSE
+transcript_mode=FALSE
 #already_sorted=FALSE
 nonstranded=FALSE
 stranded_reverse=FALSE
 samout_option=FALSE
-while getopts "i:g:afrnso" OPTION
+while getopts "i:g:afrtnso" OPTION
 do
 	case $OPTION in
 		i) input=$OPTARG;;
@@ -48,6 +53,7 @@ do
 		a) already_sorted=TRUE;;
 		f) format_bam=TRUE;;
 		r) order_pos=TRUE;;
+		t) transcript_mode=TRUE;;
 		n) nonstranded=TRUE;;
 		s) stranded_reverse=TRUE;;
 		o) samout_option=TRUE;;
