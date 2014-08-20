@@ -19,12 +19,20 @@ for line in RLOCs_file:
     rloc = line.split('\t')[0]
     if not RLOCs_index.has_key(rloc):
         RLOCs_index[rloc] = {}
-    RLOCs_index[rloc]['enscafg'] = line.split('\t')[1].split(',')
+    RLOCs_index[rloc]['enscafgs'] = line.split('\t')[1].split(',')
 
-results = {}
+# Indexing the cancer gene list
+cancer_mutation_file = open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r')
+
+cancer_mutations = []
+for line in cancer_mutation_file:
+    cancer_mutations.append(line.split('\t')[0])
+
+cancer_mutation_file.close()
 
 # Indexing the DESeq2 results
 DESeq2_file = open(options.DESeq2_file,'r')
+results = {}
 DESeq2_file.readline()
 for line in DESeq2_file:
     xloc = line.split(',')[0].split('"')[1]
@@ -71,7 +79,8 @@ cancer_known = 0
 for xloc in results:
     scores_file.write(xloc)
     venn_file.write(xloc)
-    if results[xloc].has_key('DESeq2_score') and (results[xloc]['DESeq2_score'] != 'NA') and (results[xloc]['DESeq2_fc'] != 'NA'):
+    #if results[xloc].has_key('DESeq2_score') and (results[xloc]['DESeq2_score'] != 'NA') and (results[xloc]['DESeq2_fc'] != 'NA'):
+    if results[xloc].has_key('DESeq2_score') and (results[xloc]['DESeq2_score'] != 'NA'):
         scores_file.write(','+results[xloc]['DESeq2_score'])
         venn_file.write(','+str(int(float(results[xloc]['DESeq2_score']) <= threshold)))
     else:
@@ -84,18 +93,24 @@ for xloc in results:
         if (float(results[xloc]['edgeR_score']) <= threshold) and (results[xloc].has_key('DESeq2_score')) and (results[xloc]['DESeq2_score'] != 'NA') and (float(results[xloc]['DESeq2_score']) <= threshold):
             DE_genes += 1
             if RLOCs_index.has_key(xloc):
-                enscafg = ','.join((RLOCs_index[xloc]['enscafg']))
+                enscafgs = ','.join((RLOCs_index[xloc]['enscafgs']))
             else:
-                enscafg = 'No_ENSCAFG'
+                enscafgs = 'No_ENSCAFG'
             if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
-                gene_id_file.write(xloc+'\t'+str(enscafg)+'\tUp-regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tUp-regulated\n')
             elif (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'down'):
                 downreg += 1
-                gene_id_file.write(xloc+'\t'+str(enscafg)+'\tDown-regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tDown-regulated\n')
             else:
                 ambiguous += 1
-                gene_id_file.write(xloc+'\t'+str(enscafg)+'\tambiguously regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tambiguously regulated\n')
+            """
+            for enscafg in intersect[xloc]:
+                if enscafg in cancer_mutations:
+                    cancer_known += 1
+                    break
+            """
     else:
         scores_file.write(',NA\n')
         venn_file.write(',0\n')
@@ -107,3 +122,4 @@ print 'DE gene(s) found:', DE_genes
 print '\tUp-regulated gene(s):', upreg
 print '\tDown-regulated gene(s):', downreg
 print '\tAmbiguously regulated gene(s):', ambiguous
+print 'Gene(s) known to be involved in cancer mutations: '+str(cancer_known)+' / '+str(len(cancer_mutations))
