@@ -1,7 +1,7 @@
 #!/local/python/2.7/bin/python
 
 # Mathieu Bahin, 12/06/14
-# Last update: 18/07/14
+# Last update: 27/08/14
 
 # Script to get the split reads involved in and the paired-end reads around a breakpoint from files produced by CRAC.
 # Inputs:
@@ -92,6 +92,9 @@ options = parser.parse_args()
 
 if options.bkpt and (options.total == True):
     print "Breakpoint provided (option '-b') and full gene mode chosen (option '-t'). Aborting."
+    sys.exit()
+if not options.processed_dir.startswith('/'):
+    print 'The "processed.dir" directory path specified must be an absolute path. Aborting.'
     sys.exit()
 
 # Creating a directory for the job
@@ -259,10 +262,11 @@ for line in contigs_file:
         new_contigs_file.write(line)
     else:
         seq = seq + line.rstrip()
-#os.rename('spanning_PE_reads.fasta.cap.contigs','Contigs/PE_contigs.fasta')
+new_contigs_file.write(seq+'\n')
 new_contigs_file.close()
 contigs_file.close()
 os.rename('spanning_PE_reads.fasta.cap.singlets','Contigs/PE_singlets.fasta')
+os.remove('spanning_PE_reads.fasta.cap.contigs')
 os.remove('spanning_PE_reads.fasta.cap.ace')
 os.remove('spanning_PE_reads.fasta.cap.contigs.links')
 os.remove('spanning_PE_reads.fasta.cap.contigs.qual')
