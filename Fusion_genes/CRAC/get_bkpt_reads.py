@@ -76,7 +76,6 @@ def get_fasta(sense):
 
 # Setting the environment
 os.system('. /local/env/envsamtools.sh')
-os.system('. /local/env/envcap3.sh')
 GFF = '/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
 
 # Getting options back
@@ -248,7 +247,7 @@ os.remove('output.rev.fasta')
 os.makedirs('Contigs')
 
 # Executing CAP3 command
-os.system('cap3 spanning_PE_reads.fasta > Contigs/file.log')
+os.system('/local/cap3/bin/cap3 spanning_PE_reads.fasta > Contigs/file.log')
 
 # Renaming files and cleaning directory
 contigs_file = open('spanning_PE_reads.fasta.cap.contigs', 'r')
