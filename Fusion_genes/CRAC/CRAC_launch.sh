@@ -59,8 +59,12 @@ done
 #fi
 
 # Creating a directory for the job
-if [[ "$stringent_chimera" == TRUE ]]; then
+if [[ "$stringent_chimera" == TRUE && "$noAmbiguity" == TRUE ]]; then
+	rep=$(basename $reads1 '_R1.trim.fastq.gz')_stringent_noAmbig_CRAC
+elif [[ "$stringent_chimera" == TRUE ]]; then
 	rep=$(basename $reads1 '_R1.trim.fastq.gz')_stringent_CRAC
+elif [[ "$noAmbiguity" == TRUE ]]; then
+	rep=$(basename $reads1 '_R1.trim.fastq.gz')_noAmbig_CRAC
 else
 	rep=$(basename $reads1 '_R1.trim.fastq.gz')_CRAC
 fi
