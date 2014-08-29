@@ -274,5 +274,5 @@ monoFeat_file.close()
 twoFeat_file.close()
 
 # Creating symbolic links to the spanning split reads fasta file and to the CRAC output directory of the analyse
-os.symlink(options.input+'/'+options.sample_name+'.fa','link_to_spanning_split_reads.ln.fasta')
+os.symlink(options.input+'/'+options.sample_name+'.fa',options.sample_name+'.fa')
 os.symlink(options.crac_dir,'link_to_BAM_files_directory.ln')
