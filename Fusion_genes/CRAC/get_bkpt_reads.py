@@ -76,7 +76,9 @@ def get_fasta(sense):
 
 # Setting the environment
 os.system('. /local/env/envsamtools.sh')
-GFF = '/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
+#GFF = '/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
+#GFF = '/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gff'
+GFF = '/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
 
 # Getting options back
 parser = argparse.ArgumentParser()
@@ -174,6 +176,16 @@ for line in GFF_file:
             print 'Warning: 2 RLOCs ('+feat_index[feat]['rloc']+', '+rloc+') for one feature ('+feat+')!!'       
 
 GFF_file.close()
+
+# Checking the features
+if (options.feat1 not in feat_index) or (options.feat2 not in feat_index):
+    if options.feat1 not in feat_index:
+        print 'Warning: the first feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
+    else:
+        print 'Warning: the second feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
+    os.chdir('..')
+    shutil.rmtree(dir_name)
+    sys.exit()
 
 # Getting the interval terminals
 if options.total:
