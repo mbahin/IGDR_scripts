@@ -77,8 +77,8 @@ def get_fasta(sense):
 # Setting the environment
 os.system('. /local/env/envsamtools.sh')
 #GFF = '/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
+GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
 #GFF = '/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gff'
-GFF = '/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
 
 # Getting options back
 parser = argparse.ArgumentParser()
@@ -254,6 +254,11 @@ os.remove('output.rev.fasta')
 #####
 # Making the contigs with CAP3
 #####
+
+# Testing the spanning paired-end reads file
+if os.stat('spanning_PE_reads.fasta')[6] == 0:
+    print 'Warning: "spanning_PE_reads.fasta" file is empty. No contig file can be created.\n#####'
+    sys.exit()
 
 # Creating a directory for contigs
 os.makedirs('Contigs')
