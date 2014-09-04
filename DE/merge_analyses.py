@@ -1,9 +1,14 @@
 #!/local/python/2.7/bin/python
 
 # Mathieu Bahin, 04/04/14
-# Last update: 16/07/14
+# Last update: 28/08/14
 
-import argparse
+import os, argparse
+
+# Setting the environment
+os.system('. /local/env/envpython-2.7.sh')
+
+#import argparse
 
 # Getting options back
 parser = argparse.ArgumentParser()
@@ -73,7 +78,7 @@ DE_genes = 0
 upreg = 0
 downreg = 0
 ambiguous = 0
-cancer_known = 0
+cancer_known_nb = 0
 #biotypes
 
 for xloc in results:
@@ -96,21 +101,28 @@ for xloc in results:
                 enscafgs = ','.join((RLOCs_index[xloc]['enscafgs']))
             else:
                 enscafgs = 'No_ENSCAFG'
+            # Determining if the gene is in the candidates list
+            if RLOCs_index.has_key(xloc):
+                cancer_known = False
+                for enscafg in RLOCs_index[xloc]['enscafgs']:
+                    if enscafg in cancer_mutations:
+                        cancer_known = True
+                        cancer_known_nb += 1
+                        break
+                if cancer_known:
+                    cancer_known = 'In_cancer_mutation_list'
+                else:
+                    cancer_known = 'Not_listed'
+            # Writing the output file 'file.gene_id.list'
             if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
-                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tUp-regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tUp-regulated\t'+cancer_known+'\n')
             elif (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'down'):
                 downreg += 1
-                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tDown-regulated\n')
+                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tDown-regulated\t'+cancer_known+'\n')
             else:
                 ambiguous += 1
-                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tambiguously regulated\n')
-            """
-            for enscafg in intersect[xloc]:
-                if enscafg in cancer_mutations:
-                    cancer_known += 1
-                    break
-            """
+                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tambiguously regulated\t'+cancer_known+'\n')
     else:
         scores_file.write(',NA\n')
         venn_file.write(',0\n')
@@ -122,4 +134,4 @@ print 'DE gene(s) found:', DE_genes
 print '\tUp-regulated gene(s):', upreg
 print '\tDown-regulated gene(s):', downreg
 print '\tAmbiguously regulated gene(s):', ambiguous
-print 'Gene(s) known to be involved in cancer mutations: '+str(cancer_known)+' / '+str(len(cancer_mutations))
+print 'Gene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))
