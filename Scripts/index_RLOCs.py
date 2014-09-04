@@ -2,111 +2,104 @@
 
 # Mathieu Bahin, 21/05/14
 
-# Script to index the RLOCs and ENSCAFGs. 2 index files are created. The RLOC index list the ENSCAFGs corresponding to each RLOC (from the file intersecting BROAD and Ensembl features). If none is found, information can sometimes be found in the GFF file (particularly human homologous gene names. If so, the second column is 'No_ENSCAFG' and the additive information is in the third column. Else, if no information can be found, the RLOC is not present in the index. Most of the times, there is the RLOC, its ENSCAFGs list and 'No_BROAD_bonus' in the third column (if an ENSCAFG is found in the intersection file, no information is searched in the GFF file).
+# Script to index the RLOCs and ENSCAFGs, 2 index files are created.
+# The RLOC index list the ENSCAFGs corresponding to each RLOC (from the file intersecting BROAD and Ensembl features). If none is found, information can sometimes be found in the GFF file (particularly human homologous gene names. If so, the second column is 'No_ENSCAFG' and the additive information is in the third column. Else, if no information can be found, the RLOC is not present in the index). Most of the times, there is the RLOC, its ENSCAFGs list and 'No_BROAD_bonus' in the third column (if an ENSCAFG is found in the intersection file, no information is searched in the GFF file).
 # Input is a file intersecting BROAD and ensembl annotation, the GFF file corresponding and the 2 index filenames to produce.
 # Output are two tab-separated files with the RLOCs and ENSCAFGs indexes.
 
-import sys, re
+import argparse, sys, re
 
-# Opening files
-intersection_file = open(sys.argv[1],'r')
-gff_file = open(sys.argv[2],'r')
-RLOC_output = open(sys.argv[3],'w')
-ENSCAFG_output = open(sys.argv[4], 'w')
+# Getting options back
+parser = argparse.ArgumentParser()
+parser.add_argument('-g', dest='GTF', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf')
+parser.add_argument('-b', dest='biomart', default='/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt')
+parser.add_argument('-r', dest='RLOC', default='RLOCs_index.txt')
+parser.add_argument('-e', dest='ENSCAFG', default='ENSCAFGs_index.txt')
+options = parser.parse_args()
 
-# Parsing the intersection file
+# Indexing the GTF file
 RLOCs = {}
 ENSCAFGs = {}
-for line in intersection_file:
-    # Getting the 'RLOC',the BROAD name or 'ENSCAFG' if there is no name and the ENSCAFG from Ensembl
-    rloc = line.split('\t')[8].split('"')[1]
-    name = line.split('\t')[8].split('"')[3]
-    # Removing the transcript number if present
-    match = re.match(r'(.*)_[0-9]*$',name)
-    if match:
-        name = match.group(1)
-    biotype_BROAD = line.split('\t')[8].split('"')[5]
-    biotype_Ensembl = line.split('\t')[10]
-    enscafg = line.split('\t')[17].split('"')[1]
-    # Filling RLOCs index
-    if not RLOCs.has_key(rloc):
-        RLOCs[rloc] = {}
-        RLOCs[rloc]['enscafg'] = []
-        RLOCs[rloc]['BROAD_bonus'] = 'No_BROAD_bonus'
-    if enscafg not in RLOCs[rloc]['enscafg']:
-        #RLOCs[rloc].append(enscafg)
-        RLOCs[rloc]['enscafg'].append(enscafg)
-    if (name.startswith('ENSCAFG')) and (name != enscafg) and (name not in RLOCs[rloc]['enscafg']):
-        #RLOCs[rloc].append(name)
-        RLOCs[rloc]['enscafg'].append(name)
-    # Filling ENSCFGs index
-        # Finding the cases where the BROAD and Ensmbl doesn't agree on the ENSCAFG
-    #if name.startswith ('ENSCAFG') and name != enscafg:
-        #print 'Oh oh... :',enscafg, name
-        #exit
-    # Filling gene name information
-    if not name.startswith('ENSCAFG') and not name.startswith('CFRNASEQ') and not name.startswith('ENSCAFT'):
-        if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg]['name'] != name:
-            sys.exit('Two names for ENSCAFG '+enscafg+'! Aborting.')
-        if not ENSCAFGs.has_key(enscafg):
-            ENSCAFGs[enscafg] = {}
-            ENSCAFGs[enscafg]['biotype'] = ''
-        ENSCAFGs[enscafg]['name'] = name
-    else:
-        if ENSCAFGs.has_key(enscafg) and ENSCAFGs[enscafg]['name'] != 'No_name':
-            sys.exit('Two names for ENSCAFG '+enscafg+'! Aborting.')
-        if not ENSCAFGs.has_key(enscafg):
-            ENSCAFGs[enscafg] = {}
-            ENSCAFGs[enscafg]['biotype'] = ''
-        ENSCAFGs[enscafg]['name'] = 'No_name'
-    # Filling the biotype information ('Ambiguous' when Ensembl and the BROAD diasgree, 'Multiple' when there are transcripts from exons with different biotypes)
-    if ENSCAFGs[enscafg]['biotype'] != 'Ambiguous':
-        if (biotype_BROAD != biotype_Ensembl) or ((ENSCAFGs[enscafg]['biotype'] != '') and ((ENSCAFGs[enscafg]['biotype'] != biotype_BROAD) or (ENSCAFGs[enscafg]['biotype'] != biotype_Ensembl))):
-            ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'
-        else:
-            ENSCAFGs[enscafg]['biotype'] = biotype_BROAD
-
-# Catching more information from the GFF file (BROAD names without ENSCAFG)
-###
-# The intersection file only lists features for which BROAD and Ensembl annotations match at a certain percentage. The GFF file might have more information on several RLOCs (an ENSCAFG or a gene name or a human paralogous gene name). These information are added to the RLOC dictionary.
-###
-for line in gff_file:
-    if line.split('\t')[2] == 'mRNA':
-        enscafg = ''
-        match = re.match(r'ID=(.*);Parent=(RLOC_.*);exon.*;type=.*:(.*);',line.split('\t')[8])
-        match2 = re.match(r'(.*)_[0-9]*$',match.group(1))
-        if match2:
-            enscafg = match2.group(1)
-        else:
-            enscafg = match.group(1)
-        # Checking if there is an ENSCAFG from the GFF file not found in the intersection file
-        #if enscafg.startswith('ENSCAFG') and (RLOCs.has_key(match.group(2))) and (enscafg not in RLOCs[match.group(2)]['enscafg']):
-            #print "Oh no !",match.group(2),enscafg,str(RLOCs[match.group(2)]['enscafg'])
-        if (not RLOCs.has_key(match.group(2))) and (not match.group(1).startswith('CFRNASEQ')):
-            RLOCs[match.group(2)] = {}
-            RLOCs[match.group(2)]['enscafg'] = []
-            if enscafg.startswith('ENSCAFG'):
-                RLOCs[match.group(2)]['enscafg'].append(enscafg)
-                RLOCs[match.group(2)]['BROAD_bonus'] = 'No_BROAD_bonus'
-                if (ENSCAFGs.has_key(enscafg)) and (ENSCAFGs[enscafg]['biotype'] != match.group(3)):
-                    ENSCAFGs[enscafg]['biotype'] = 'Ambiguous'
-                elif not ENSCAFGs.has_key(enscafg):
-                    ENSCAFGs[enscafg] = {}
-                    ENSCAFGs[enscafg]['name']
-                    print enscafg,ENSCAFGs[enscafg]['biotype'],match.group(3)
+with open(options.GTF,'r') as GTF_file:
+    for line in GTF_file:
+        # Getting the RLOC, ENSCAFG, gene name and biotype
+        enscafg = 'No_ENSCAFG'
+        name = 'No_name'
+        rloc = line.split('\t')[8].split('"')[1]
+        biotype = line.split('\t')[8].split('"')[9]
+        
+        # Getting the transcript ID (an ENSCAFG or a gene name)
+        if not line.split('\t')[8].split('"')[3].startswith(('CFRNASEQ','ENSCAFT')):
+            tcpt_id = re.match(r'(.*)_([2-9]|[1-9][0-9]+)$',line.split('\t')[8].split('"')[3])
+            if tcpt_id:
+                tcpt = tcpt_id.group(1)
             else:
-                RLOCs[match.group(2)]['enscafg'] = ['No_ENSCAFG']
-                RLOCs[match.group(2)]['BROAD_bonus'] = enscafg
+                tcpt = line.split('\t')[8].split('"')[3]
+        else:
+            tcpt = 'No_name'
+        if line.split('\t')[8].split('"')[5] != 'NA':
+            enscafg = line.split('\t')[8].split('"')[5].split(',')[0] # When there a several ENSCAFGs, they are identicals
+            if not tcpt.startswith('ENSCAFG'):
+                name = tcpt
+        elif tcpt.startswith('ENSCAFG'):
+            enscafg = tcpt
+        else:
+            name = tcpt
 
-# Writing index files
-for rloc in sorted(RLOCs):
-    RLOC_output.write(rloc+'\t'+','.join(RLOCs[rloc]['enscafg'])+'\t'+RLOCs[rloc]['BROAD_bonus']+'\n')
+        # Creating the RLOC in the index if necessary
+        if not RLOCs.has_key(rloc):
+            RLOCs[rloc] = {}
+            RLOCs[rloc]['enscafgs'] = ['No_ENSCAFG']
+            RLOCs[rloc]['orthologues'] = ''
+            RLOCs[rloc]['biotype'] = []
 
-for enscafg in sorted(ENSCAFGs):
-    ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['name']+'\t'+ENSCAFGs[enscafg]['biotype']+'\n')
+        # Creating the ENSCAFG in the index if necessary
+        if enscafg and (not ENSCAFGs.has_key(enscafg)):
+            ENSCAFGs[enscafg] = {}
+            ENSCAFGs[enscafg]['ENSEMBL_name'] = 'No_name'
+            ENSCAFGs[enscafg]['BROAD_name'] = 'No_name'
 
-# Closing fils
-intersection_file.close()
-gff_file.close()
-RLOC_output.close()
-ENSCAFG_output.close()
+        # Filling the indexes
+        if enscafg != 'No_ENSCAFG':
+            if enscafg not in RLOCs[rloc]['enscafgs']:
+                if 'No_ENSCAFG' in RLOCs[rloc]['enscafgs']:
+                    RLOCs[rloc]['enscafgs'].remove('No_ENSCAFG')
+                RLOCs[rloc]['enscafgs'].append(enscafg)
+            if name != 'No_name':
+                RLOCs[rloc]['orthologues'] = '' # If there is an ENSCAFG and one of the transcripts has a gene name, then no name is needed in the RLOC index
+                if (name != ENSCAFGs[enscafg]['BROAD_name']) and (ENSCAFGs[enscafg]['BROAD_name'] != 'No_name'):
+                    print 'Warning: the BROAD provided 2 names for '+enscafg+'!'
+                elif ENSCAFGs[enscafg]['BROAD_name'] == 'No_name':
+                    ENSCAFGs[enscafg]['BROAD_name'] = name
+        elif (RLOCs[rloc]['enscafgs'] == ['No_ENSCAFG']) and (name != 'No_name'):
+            if (RLOCs[rloc]['orthologues'] != '') and (RLOCs[rloc]['orthologues'] != name):
+                print 'Warning: there are two orthologues names for '+rloc+'!'
+            RLOCs[rloc]['orthologues'] = name
+        if biotype not in RLOCs[rloc]['biotype']:
+            RLOCs[rloc]['biotype'].append(biotype)
+
+# Indexing the Biomart file
+with open(options.biomart,'r') as biomart_file:
+    biomart_file.readline()
+    for line in biomart_file:
+        enscafg = line.split('\t')[0]
+        name = line.split('\t')[1]
+        if name:
+            if not ENSCAFGs.has_key(enscafg):
+                print 'Warning: '+enscafg+' was not listed in the GFF file!'
+            elif (ENSCAFGs[enscafg]['ENSEMBL_name'] != 'No_name') and (ENSCAFGs[enscafg]['ENSEMBL_name'] != name):
+                print 'Warning: Biomart provided 2 different names for '+enscafg+'!'
+            else:
+                ENSCAFGs[enscafg]['ENSEMBL_name'] = name
+
+# Writing the output index files
+with open(options.RLOC,'w') as RLOC_output:
+    for rloc in sorted(RLOCs):
+        RLOC_output.write(rloc+'\t'+','.join(RLOCs[rloc]['enscafgs'])+'\t'+RLOCs[rloc]['orthologues']+'\t'+','.join(RLOCs[rloc]['biotype'])+'\n')
+
+with open(options.ENSCAFG,'w') as ENSCAFG_output:
+    for enscafg in sorted(ENSCAFGs):
+        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\n')
+
+# Particular case: grep RLOC_00021852 $GTFv3_2
+# Giving an "aberration" in the RLOC index: RLOC_00021852	ENSCAFG00000031893,ENSCAFG00000032619	SOX2
