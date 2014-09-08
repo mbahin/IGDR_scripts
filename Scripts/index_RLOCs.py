@@ -92,6 +92,19 @@ with open(options.biomart,'r') as biomart_file:
             else:
                 ENSCAFGs[enscafg]['ENSEMBL_name'] = name
 
+# Creating a consensus name column in the ENSCAFGs index
+for enscafg in ENSCAFGs:
+    ENSCAFGs[enscafg]['consensus'] = []
+    if ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']:
+        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
+    elif ENSCAFGs[enscafg]['ENSEMBL_name'] == 'No_name':
+        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['BROAD_name']]
+    elif ENSCAFGs[enscafg]['BROAD_name'] == 'No_name':
+        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
+    else:
+        ENSCAFGs[enscafg]['consensus'].append(ENSCAFGs[enscafg]['ENSEMBL_name'])
+        ENSCAFGs[enscafg]['consensus'].append(ENSCAFGs[enscafg]['BROAD_name'])
+
 # Writing the output index files
 with open(options.RLOC,'w') as RLOC_output:
     for rloc in sorted(RLOCs):
@@ -99,7 +112,7 @@ with open(options.RLOC,'w') as RLOC_output:
 
 with open(options.ENSCAFG,'w') as ENSCAFG_output:
     for enscafg in sorted(ENSCAFGs):
-        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\n')
+        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+','.join(ENSCAFGs[enscafg]['consensus'])+'\n')
 
 # Particular case: grep RLOC_00021852 $GTFv3_2
 # Giving an "aberration" in the RLOC index: RLOC_00021852	ENSCAFG00000031893,ENSCAFG00000032619	SOX2
