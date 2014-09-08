@@ -108,11 +108,11 @@ for enscafg in ENSCAFGs:
 # Writing the output index files
 with open(options.RLOC,'w') as RLOC_output:
     for rloc in sorted(RLOCs):
-        RLOC_output.write(rloc+'\t'+','.join(RLOCs[rloc]['enscafgs'])+'\t'+RLOCs[rloc]['orthologues']+'\t'+','.join(sorted(RLOCs[rloc]['biotype']))+'\n')
+        RLOC_output.write(rloc+'\t'+','.join(sorted(RLOCs[rloc]['enscafgs']))+'\t'+RLOCs[rloc]['orthologues']+'\t'+','.join(sorted(RLOCs[rloc]['biotype']))+'\n')
 
 with open(options.ENSCAFG,'w') as ENSCAFG_output:
     for enscafg in sorted(ENSCAFGs):
-        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+','.join(sorted(ENSCAFGs[enscafg]['consensus']))+'\n')
+        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+'|'.join(sorted(ENSCAFGs[enscafg]['consensus']))+'\n')
 
 # Particular case: grep RLOC_00021852 $GTFv3_2
 # Giving an "aberration" in the RLOC index: RLOC_00021852	ENSCAFG00000031893,ENSCAFG00000032619	SOX2
