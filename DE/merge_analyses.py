@@ -3,7 +3,7 @@
 # Mathieu Bahin, 04/04/14
 # Last update: 08/09/14
 
-import os, argparse
+import os, argparse, shutil, sys
 
 # Setting the environment
 os.system('. /local/env/envpython-2.7.sh')
@@ -81,6 +81,9 @@ DE_genes = 0
 upreg = 0
 downreg = 0
 ambiguous = 0
+protein_coding = 0
+lncRNA = 0
+other = 0
 cancer_known_nb = 0
 #biotypes
 
@@ -124,6 +127,14 @@ for xloc in results:
                     names.append(ENSCAFGs[enscafg])
                 gene_id_file.write('\t'+','.join(names))
             gene_id_file.write('\t'+','.join(RLOCs_index[xloc]['biotype']))
+            # Updating biotype statistics
+            if RLOCs_index[xloc]['biotype'] == ['protein_coding']:
+                protein_coding += 1
+            elif RLOCs_index[xloc]['biotype'] == ['lncRNA']:
+                lncRNA += 1
+            else:
+                other += 1
+            # Determining the regulation and cancer list belonging
             if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
                 gene_id_file.write('\tUp-regulated\t'+cancer_known+'\n')
@@ -139,9 +150,18 @@ for xloc in results:
 scores_file.close()
 venn_file.close()
 
-# Printing some statistics
-print 'DE gene(s) found:', DE_genes
-print '\tUp-regulated gene(s):', upreg
-print '\tDown-regulated gene(s):', downreg
-print '\tAmbiguously regulated gene(s):', ambiguous
-print 'Gene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))
+# Logging some statistics and printing it
+with open('statistics.txt','w') as stat_file:
+    stat_file.write('DE gene(s) found: '+str(DE_genes)+'\n')
+    stat_file.write('\tRegulation\n')
+    stat_file.write('\t\tUp-regulated gene(s): '+str(upreg)+'\n')
+    stat_file.write('\t\tDown-regulated gene(s): '+str(downreg)+'\n')
+    stat_file.write('\t\tAmbiguously regulated gene(s): '+str(ambiguous)+'\n')
+    stat_file.write('\tBiotypes\n')
+    stat_file.write('\t\tProtein coding: '+str(protein_coding)+'\n')
+    stat_file.write('\t\tLncRNA: '+str(lncRNA)+'\n')
+    stat_file.write('\t\tAmbiguous / Other: '+str(other)+'\n')
+    stat_file.write('\tGene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))+'\n')
+
+with open ('statistics.txt','r') as stat_file:
+    shutil.copyfileobj(stat_file, sys.stdout)
