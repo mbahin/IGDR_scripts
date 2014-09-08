@@ -8,8 +8,6 @@ import os, argparse
 # Setting the environment
 os.system('. /local/env/envpython-2.7.sh')
 
-#import argparse
-
 # Getting options back
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', dest='threshold')
@@ -18,22 +16,19 @@ parser.add_argument('-e', dest='edgeR_file')
 options = parser.parse_args()
 
 # Indexing the RLOCs index
-RLOCs_file = open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r')
 RLOCs_index = {}
-for line in RLOCs_file:
-    rloc = line.split('\t')[0]
-    if not RLOCs_index.has_key(rloc):
+with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as RLOCs_file:
+    for line in RLOCs_file:
+        rloc = line.split('\t')[0]
         RLOCs_index[rloc] = {}
-    RLOCs_index[rloc]['enscafgs'] = line.split('\t')[1].split(',')
+        RLOCs_index[rloc]['enscafgs'] = line.split('\t')[1].split(',')
+        RLOCs_index[rloc]['biotype'] = line.rstrip().split('\t')[3].split(',')
 
 # Indexing the cancer gene list
-cancer_mutation_file = open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r')
-
 cancer_mutations = []
-for line in cancer_mutation_file:
-    cancer_mutations.append(line.split('\t')[0])
-
-cancer_mutation_file.close()
+with open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r') as cancer_mutation_file:
+    for line in cancer_mutation_file:
+        cancer_mutations.append(line.split('\t')[0])
 
 # Indexing the DESeq2 results
 DESeq2_file = open(options.DESeq2_file,'r')
@@ -97,10 +92,7 @@ for xloc in results:
         # Producing the DE gene list
         if (float(results[xloc]['edgeR_score']) <= threshold) and (results[xloc].has_key('DESeq2_score')) and (results[xloc]['DESeq2_score'] != 'NA') and (float(results[xloc]['DESeq2_score']) <= threshold):
             DE_genes += 1
-            if RLOCs_index.has_key(xloc):
-                enscafgs = ','.join((RLOCs_index[xloc]['enscafgs']))
-            else:
-                enscafgs = 'No_ENSCAFG'
+
             # Determining if the gene is in the candidates list
             if RLOCs_index.has_key(xloc):
                 cancer_known = False
@@ -113,16 +105,29 @@ for xloc in results:
                     cancer_known = 'In_cancer_mutation_list'
                 else:
                     cancer_known = 'Not_listed'
+
             # Writing the output file 'file.gene_id.list'
+            gene_id_file.write(xloc+'\t'+','.join(RLOCs_index[xloc]['enscafgs'])+'\t'+','.join(RLOCs_index[xloc]['biotype']))
             if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
-                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tUp-regulated\t'+cancer_known+'\n')
+                gene_id_file.write('\tUp-regulated\t'+cancer_known+'\n')
             elif (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'down'):
                 downreg += 1
-                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tDown-regulated\t'+cancer_known+'\n')
+                gene_id_file.write('\tDown-regulated\t'+cancer_known+'\n')
             else:
                 ambiguous += 1
-                gene_id_file.write(xloc+'\t'+str(enscafgs)+'\tambiguously regulated\t'+cancer_known+'\n')
+                gene_id_file.write('\tambiguously regulated\t'+cancer_known+'\n')
+            """
+            if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
+                upreg += 1
+                gene_id_file.write(xloc+'\t'+','.join((RLOCs_index[xloc]['enscafgs']))+'\tUp-regulated\t'+cancer_known+'\n')
+            elif (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'down'):
+                downreg += 1
+                gene_id_file.write(xloc+'\t'+','.join((RLOCs_index[xloc]['enscafgs']))+'\tDown-regulated\t'+cancer_known+'\n')
+            else:
+                ambiguous += 1
+                gene_id_file.write(xloc+'\t'+','.join((RLOCs_index[xloc]['enscafgs']))+'\tambiguously regulated\t'+cancer_known+'\n')
+            """
     else:
         scores_file.write(',NA\n')
         venn_file.write(',0\n')
