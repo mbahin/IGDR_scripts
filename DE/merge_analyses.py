@@ -1,7 +1,7 @@
 #!/local/python/2.7/bin/python
 
 # Mathieu Bahin, 04/04/14
-# Last update: 28/08/14
+# Last update: 08/09/14
 
 import os, argparse
 
@@ -22,7 +22,15 @@ with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as R
         rloc = line.split('\t')[0]
         RLOCs_index[rloc] = {}
         RLOCs_index[rloc]['enscafgs'] = line.split('\t')[1].split(',')
+        RLOCs_index[rloc]['name'] = line.split('\t')[2]
         RLOCs_index[rloc]['biotype'] = line.rstrip().split('\t')[3].split(',')
+
+# Indexing the ENSCAFGs index
+ENSCAFGs = {}
+with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
+    for line in ENSCAFGs_file:
+        enscafg = line.split('\t')[0]
+        ENSCAFGs[enscafg] = line.rstrip().split('\t')[3]
 
 # Indexing the cancer gene list
 cancer_mutations = []
@@ -107,7 +115,15 @@ for xloc in results:
                     cancer_known = 'Not_listed'
 
             # Writing the output file 'file.gene_id.list'
-            gene_id_file.write(xloc+'\t'+','.join(RLOCs_index[xloc]['enscafgs'])+'\t'+','.join(RLOCs_index[xloc]['biotype']))
+            gene_id_file.write(xloc+'\t'+','.join(RLOCs_index[xloc]['enscafgs'])+'\t')
+            if RLOCs_index[xloc]['enscafgs'] == ['No_ENSCAFG']:
+                gene_id_file.write(RLOCs_index[xloc]['name'])
+            else:
+                names = []
+                for enscafg in RLOCs_index[xloc]['enscafgs']:
+                    names.append(ENSCAFGs[enscafg])
+                gene_id_file.write('\t'+','.join(names))
+            gene_id_file.write('\t'+','.join(RLOCs_index[xloc]['biotype']))
             if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
                 gene_id_file.write('\tUp-regulated\t'+cancer_known+'\n')
@@ -117,17 +133,6 @@ for xloc in results:
             else:
                 ambiguous += 1
                 gene_id_file.write('\tambiguously regulated\t'+cancer_known+'\n')
-            """
-            if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
-                upreg += 1
-                gene_id_file.write(xloc+'\t'+','.join((RLOCs_index[xloc]['enscafgs']))+'\tUp-regulated\t'+cancer_known+'\n')
-            elif (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'down'):
-                downreg += 1
-                gene_id_file.write(xloc+'\t'+','.join((RLOCs_index[xloc]['enscafgs']))+'\tDown-regulated\t'+cancer_known+'\n')
-            else:
-                ambiguous += 1
-                gene_id_file.write(xloc+'\t'+','.join((RLOCs_index[xloc]['enscafgs']))+'\tambiguously regulated\t'+cancer_known+'\n')
-            """
     else:
         scores_file.write(',NA\n')
         venn_file.write(',0\n')

@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Mathieu Bahin, 31/03/14 (2nd edition)
+# Last update: 31/03/14
 
 # Template command to launch the script in a loop
 #for i in $(ls <BAM files directory>/*.bam); do qsub <script> -b $i -g <file.gtf> -c -o -s; done
@@ -20,7 +21,7 @@ paired_design=FALSE
 glm=FALSE
 htsfilter=FALSE
 threshold=0.05
-while getopts "m:d:c:f:t:pq:gh" OPTION
+while getopts "m:d:c:f:t:p:gh" OPTION
 do
 	case $OPTION in
     	m) mode=$OPTARG;;
@@ -161,6 +162,7 @@ fi
 if [[ ${#mode} == 2 ]]; then
     echo "===== Intersecting DESeq2 and edgeR analysis results..."
 	python $merge_analyses_script -t $threshold -d $DESeq2_mode/file.output.csv -e $edgeR_mode/file.output.csv
+	#./$merge_analyses_script -t $threshold -d $DESeq2_mode/file.output.csv -e $edgeR_mode/file.output.csv
 
     # Creating a Venn diagram
     Rscript /home/genouest/genouest/mbahin/DE/create_Venn.r
