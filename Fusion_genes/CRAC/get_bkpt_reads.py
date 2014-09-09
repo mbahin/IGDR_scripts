@@ -183,10 +183,11 @@ gene_names = {}
 with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
     for line in ENSCAFGs_file:
         enscafg = line.split('\t')[0]
-        gene_names[enscafg] = []
-        gene_names[enscafg].append(line.split('\t')[1])
-        if line.split('\t')[2] != line.split('\t')[1]:
-            gene_names[enscafg].append(line.split('\t')[2])
+        gene_names[enscafg] = line.rstrip().split('\t')[3].split(',')
+        #gene_names[enscafg] = []
+        #gene_names[enscafg].append(line.split('\t')[1])
+        #if line.split('\t')[2] != line.split('\t')[1]:
+            #gene_names[enscafg].append(line.split('\t')[2])
 
 # Linking ENSCAFGs/gene names and RLOCs
 RLOCs_index = {}
@@ -195,6 +196,10 @@ with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as R
     for line in RLOCs_file:
         rloc = line.split('\t')[0]
         enscafg_list = line.split('\t')[1].split(',')
+        if enscafg_list == ['No_ENSCAFG']:
+            if line.split('\t')[2] != '':
+                feat_index[line.split('\t')[2]] = rloc
+            continue
         for enscafg in enscafg_list:
             if feat_index.has_key(enscafg):
                 feat_index[enscafg] = 'Multiple'
