@@ -76,9 +76,8 @@ def get_fasta(sense):
 
 # Setting the environment
 os.system('. /local/env/envsamtools.sh')
-#GFF = '/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
-GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
-#GFF = '/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gff'
+#GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
+GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gff'
 
 # Getting options back
 parser = argparse.ArgumentParser()
@@ -156,38 +155,12 @@ if not options.total:
 # Indexing RLOCs, ENSCAFGs, gene names and positions
 #####
 
-"""
-# Indexing the GFF file to get the correspondance between RLOCs and features and the features terminals
-GFF_file = open(GFF,'r')
-feat_index = {}
-RLOCs_index = {}
-for line in GFF_file:
-    if line.split('\t')[2] == 'gene':
-        rloc = line.split('\t')[8].split(';')[0].split('=')[1]
-        RLOCs_index[rloc] = {}
-        RLOCs_index[rloc]['chr'] = line.split('\t')[0]
-        RLOCs_index[rloc]['start'] = line.split('\t')[3]
-        RLOCs_index[rloc]['end'] = line.split('\t')[4]
-    if line.split('\t')[2] == 'mRNA':
-        feat = line.split('\t')[8].split(';')[0].split('=')[1]
-        rloc = line.split('\t')[8].split(';')[1].split('=')[1]
-        if not feat_index.has_key(feat):
-            feat_index[feat] = rloc
-        elif feat_index[feat] != rloc:
-            print 'Warning: 2 RLOCs ('+feat_index[feat]['rloc']+', '+rloc+') for one feature ('+feat+')!!'  
-
-GFF_file.close()
-"""
 # Linking ENSCAFGs and gene names
 gene_names = {}
 with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
     for line in ENSCAFGs_file:
         enscafg = line.split('\t')[0]
         gene_names[enscafg] = line.rstrip().split('\t')[3].split(',')
-        #gene_names[enscafg] = []
-        #gene_names[enscafg].append(line.split('\t')[1])
-        #if line.split('\t')[2] != line.split('\t')[1]:
-            #gene_names[enscafg].append(line.split('\t')[2])
 
 # Linking ENSCAFGs/gene names and RLOCs
 RLOCs_index = {}
@@ -213,9 +186,8 @@ with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as R
                         feat_index[gene_name] = rloc
 
 # Indexing RLOC coordinates
-GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
-with open(GFF,'r') as RLOCs_file:
-    for line in RLOCs_file:
+with open(GFF,'r') as GFF_file:
+    for line in GFF_file:
         if line.split('\t')[2] != 'gene':
             continue
         else:
