@@ -23,7 +23,7 @@ import os, argparse, sys, re, shutil
 
 def get_fasta(sense):
     #####
-    # Function get the fasta file of the reads with one mate in the first interest region and the other in the second one.
+    # Function to get the fasta file of the reads with one mate in the first interest region and the other in the second one.
     # The parameter indicate wether the operation is done in the sense or the reverse sense.
     #####
 
@@ -48,21 +48,21 @@ def get_fasta(sense):
         output = open ('output.fasta','w')
     else:
         output = open ('output.rev.fasta','w')
-    readID_list = []
+    readID_list = {}
     for line in SAM_file:
         ID = line.split('\t')[0]
-        if ID in readID_list:
+        if readID_list.has_key(ID):
             flag = line.split('\t')[1]
-            seq1 = line.split('\t')[9]
-            seq2 = re.match(r'.*\tR2:Z:([^\t]*)\t.*',line).group(1)
+            seq = line.split('\t')[9]
             if int(flag) & 0x40:
                 # First mate line found
-                output.write('>'+ID+'/1\n'+seq1+'\n>'+ID+'/2\n'+seq2+'\n')
+                output.write('>'+ID+'/1\n'+seq+'\n>'+ID+'/2\n'+readID_list[ID]['seq']+'\n')
             else:
                 # Second mate line found
-                output.write('>'+ID+'/1\n'+seq2+'\n>'+ID+'/2\n'+seq1+'\n')
+                output.write('>'+ID+'/1\n'+readID_list[ID]['seq']+'\n>'+ID+'/2\n'+seq+'\n')
         else:
-            readID_list.append(ID)
+            readID_list[ID] = {}
+            readID_list[ID]['seq'] = line.split('\t')[9]
     output.close()
     SAM_file.close()
     
@@ -127,9 +127,9 @@ if options.bkpt:
     strand2 = options.bkpt.split(',')[2].split(' ')[0]
 
 if not options.total:
-    #####
-    # Getting the spanning reads
-    #####
+#####
+# Getting the spanning reads
+#####
 
     # Building the spanning read file
     fasta_file = open(options.processed_dir+'/link_to_spanning_split_reads.ln.fasta','r')
@@ -153,29 +153,76 @@ if not options.total:
     fasta_file.close()
 
 #####
-# Getting the paired-end reads around the breakpoint
+# Indexing RLOCs, ENSCAFGs, gene names and positions
 #####
 
+"""
 # Indexing the GFF file to get the correspondance between RLOCs and features and the features terminals
 GFF_file = open(GFF,'r')
 feat_index = {}
-rloc_index = {}
+RLOCs_index = {}
 for line in GFF_file:
     if line.split('\t')[2] == 'gene':
         rloc = line.split('\t')[8].split(';')[0].split('=')[1]
-        rloc_index[rloc] = {}
-        rloc_index[rloc]['chr'] = line.split('\t')[0]
-        rloc_index[rloc]['start'] = line.split('\t')[3]
-        rloc_index[rloc]['end'] = line.split('\t')[4]
+        RLOCs_index[rloc] = {}
+        RLOCs_index[rloc]['chr'] = line.split('\t')[0]
+        RLOCs_index[rloc]['start'] = line.split('\t')[3]
+        RLOCs_index[rloc]['end'] = line.split('\t')[4]
     if line.split('\t')[2] == 'mRNA':
         feat = line.split('\t')[8].split(';')[0].split('=')[1]
         rloc = line.split('\t')[8].split(';')[1].split('=')[1]
         if not feat_index.has_key(feat):
             feat_index[feat] = rloc
         elif feat_index[feat] != rloc:
-            print 'Warning: 2 RLOCs ('+feat_index[feat]['rloc']+', '+rloc+') for one feature ('+feat+')!!'       
+            print 'Warning: 2 RLOCs ('+feat_index[feat]['rloc']+', '+rloc+') for one feature ('+feat+')!!'  
 
 GFF_file.close()
+"""
+# Linking ENSCAFGs and gene names
+gene_names = {}
+with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
+    for line in ENSCAFGs_file:
+        enscafg = line.split('\t')[0]
+        gene_names[enscafg] = []
+        gene_names[enscafg].append(line.split('\t')[1])
+        if line.split('\t')[2] != line.split('\t')[1]:
+            gene_names[enscafg].append(line.split('\t')[2])
+
+# Linking ENSCAFGs/gene names and RLOCs
+RLOCs_index = {}
+feat_index = {}
+with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as RLOCs_file:
+    for line in RLOCs_file:
+        rloc = line.split('\t')[0]
+        enscafg_list = line.split('\t')[1].split(',')
+        for enscafg in enscafg_list:
+            if feat_index.has_key(enscafg):
+                feat_index[enscafg] = 'Multiple'
+            else:
+                feat_index[enscafg] = rloc
+            if gene_names.has_key(enscafg):
+                for gene_name in gene_names[enscafg]:
+                    if feat_index.has_key(gene_name):
+                        feat_index[gene_name] = 'Multiple'
+                    else:
+                        feat_index[gene_name] = rloc
+
+# Indexing RLOC coordinates
+GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
+with open(GFF,'r') as RLOCs_file:
+    for line in RLOCs_file:
+        if line.split('\t')[2] != 'gene':
+            continue
+        else:
+            rloc = line.split('\t')[8].split(';')[0].split('=')[1]
+            RLOCs_index[rloc] = {}
+            RLOCs_index[rloc]['chr'] = line.split('\t')[0]
+            RLOCs_index[rloc]['start'] = line.split('\t')[3]
+            RLOCs_index[rloc]['end'] = line.split('\t')[4]
+
+#####
+# Getting the paired-end reads around the breakpoint
+#####
 
 # Checking the features
 if (options.feat1 not in feat_index) or (options.feat2 not in feat_index):
@@ -190,25 +237,25 @@ if (options.feat1 not in feat_index) or (options.feat2 not in feat_index):
 # Getting the interval terminals
 if options.total:
     if options.feat1 != 'No_match':
-        feat1_beg = rloc_index[feat_index[options.feat1]]['start']
-        feat1_end = rloc_index[feat_index[options.feat1]]['end']
+        feat1_beg = RLOCs_index[feat_index[options.feat1]]['start']
+        feat1_end = RLOCs_index[feat_index[options.feat1]]['end']
     else:
         feat1_beg = str(int(end1) - 1000 * options.nt)
         feat1_end = str(int(end1) + 1000 * options.nt)
     if options.feat2 != 'No_match':
-        feat2_beg = rloc_index[feat_index[options.feat2]]['start']
-        feat2_end = rloc_index[feat_index[options.feat2]]['end']
+        feat2_beg = RLOCs_index[feat_index[options.feat2]]['start']
+        feat2_end = RLOCs_index[feat_index[options.feat2]]['end']
     else:
         feat2_beg = str(int(start2) - 1000 * options.nt)
         feat2_end = str(int(start2) + 1000 * options.nt)
 else:
     if options.feat1 != 'No_match':
         if strand1 == '1':
-            feat1_beg = rloc_index[feat_index[options.feat1]]['start']
+            feat1_beg = RLOCs_index[feat_index[options.feat1]]['start']
             feat1_end = end1
         else:
             feat1_beg = end1
-            feat1_end = rloc_index[feat_index[options.feat1]]['end']
+            feat1_end = RLOCs_index[feat_index[options.feat1]]['end']
     else:
         if strand1 == '1':
             feat1_beg = str(int(end1) - 1000 * options.nt)
@@ -219,9 +266,9 @@ else:
     if options.feat2 != 'No_match':
         if strand2 == '1':
             feat2_beg = start2
-            feat2_end = rloc_index[feat_index[options.feat2]]['end']
+            feat2_end = RLOCs_index[feat_index[options.feat2]]['end']
         else:
-            feat2_beg = rloc_index[feat_index[options.feat2]]['start']
+            feat2_beg = RLOCs_index[feat_index[options.feat2]]['start']
             feat2_end = start2
     else:
         if strand2 == '1':
@@ -233,8 +280,8 @@ else:
 
 # Finding chromosomes if full feature mode chosen (no breakpoint provided)
 if options.total:
-    chr1 = rloc_index[feat_index[options.feat1]]['chr']
-    chr2 = rloc_index[feat_index[options.feat2]]['chr']
+    chr1 = RLOCs_index[feat_index[options.feat1]]['chr']
+    chr2 = RLOCs_index[feat_index[options.feat2]]['chr']
 
 # Getting a BAM file with paired-end reads in the area of interest
 print 'Searching reads within '+chr1+':'+feat1_beg+'-'+feat1_end+' and '+chr2+':'+feat2_beg+'-'+feat2_end
@@ -255,7 +302,7 @@ os.remove('output.rev.fasta')
 # Making the contigs with CAP3
 #####
 
-# Testing the spanning paired-end reads file
+# Checking if the spanning paired-end reads file is empty
 if os.stat('spanning_PE_reads.fasta')[6] == 0:
     print 'Warning: "spanning_PE_reads.fasta" file is empty. No contig file can be created.\n#####'
     sys.exit()
@@ -266,21 +313,27 @@ os.makedirs('Contigs')
 # Executing CAP3 command
 os.system('/local/cap3/bin/cap3 spanning_PE_reads.fasta > Contigs/file.log')
 
-# Renaming files and cleaning directory
-contigs_file = open('spanning_PE_reads.fasta.cap.contigs', 'r')
-new_contigs_file = open('Contigs/PE_contigs.fasta','w')
-seq = ''
-for line in contigs_file:
-    if line.startswith('>'):
-        if seq != '':
-            new_contigs_file.write(seq+'\n')
-            seq = ''
-        new_contigs_file.write(line)
-    else:
-        seq = seq + line.rstrip()
-new_contigs_file.write(seq+'\n')
-new_contigs_file.close()
-contigs_file.close()
+# Checking if contig(s) have been created
+if os.stat('spanning_PE_reads.fasta.cap.contigs')[6] == 0:
+    print 'Warning: No contig could be created.'
+else:
+    # Renaming and reformatting files
+    contigs_file = open('spanning_PE_reads.fasta.cap.contigs', 'r')
+    new_contigs_file = open('Contigs/PE_contigs.fasta','w')
+    seq = ''
+    for line in contigs_file:
+        if line.startswith('>'):
+            if seq != '':
+                new_contigs_file.write(seq+'\n')
+                seq = ''
+            new_contigs_file.write(line)
+        else:
+            seq = seq + line.rstrip()
+    new_contigs_file.write(seq+'\n')
+    new_contigs_file.close()
+    contigs_file.close()
+
+# Cleaning directory
 os.rename('spanning_PE_reads.fasta.cap.singlets','Contigs/PE_singlets.fasta')
 os.remove('spanning_PE_reads.fasta.cap.contigs')
 os.remove('spanning_PE_reads.fasta.cap.ace')
