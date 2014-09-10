@@ -21,7 +21,7 @@ paired_design=FALSE
 glm=FALSE
 htsfilter=FALSE
 threshold=0.05
-while getopts "m:d:c:f:t:p:gh" OPTION
+while getopts "m:d:c:f:t:pgh" OPTION
 do
 	case $OPTION in
     	m) mode=$OPTARG;;

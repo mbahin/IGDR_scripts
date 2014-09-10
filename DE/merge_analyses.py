@@ -17,7 +17,7 @@ options = parser.parse_args()
 
 # Indexing the RLOCs index
 RLOCs_index = {}
-with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as RLOCs_file:
+with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt','r') as RLOCs_file:
     for line in RLOCs_file:
         rloc = line.split('\t')[0]
         RLOCs_index[rloc] = {}
@@ -27,7 +27,7 @@ with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as R
 
 # Indexing the ENSCAFGs index
 ENSCAFGs = {}
-with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
+with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
     for line in ENSCAFGs_file:
         enscafg = line.split('\t')[0]
         ENSCAFGs[enscafg] = line.rstrip().split('\t')[3]
@@ -151,7 +151,7 @@ scores_file.close()
 venn_file.close()
 
 # Logging some statistics and printing it
-with open('statistics.txt','w') as stat_file:
+with open('file.statistics.txt','w') as stat_file:
     stat_file.write('DE gene(s) found: '+str(DE_genes)+'\n')
     stat_file.write('\tRegulation\n')
     stat_file.write('\t\tUp-regulated gene(s): '+str(upreg)+'\n')
@@ -163,5 +163,5 @@ with open('statistics.txt','w') as stat_file:
     stat_file.write('\t\tAmbiguous / Other: '+str(other)+'\n')
     stat_file.write('\tGene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))+'\n')
 
-with open ('statistics.txt','r') as stat_file:
+with open ('file.statistics.txt','r') as stat_file:
     shutil.copyfileobj(stat_file, sys.stdout)
