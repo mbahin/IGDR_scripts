@@ -97,6 +97,9 @@ for enscafg in ENSCAFGs:
     ENSCAFGs[enscafg]['consensus'] = []
     if ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']:
         ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
+    elif re.match(r''+ENSCAFGs[enscafg]['ENSEMBL_name']+'_CANFA',ENSCAFGs[enscafg]['BROAD_name']):
+        # If the BROAD name is different from Ensembl name only adding '_CANFA' by the end, the consensus is Ensembl name
+        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
     elif ENSCAFGs[enscafg]['ENSEMBL_name'] == 'No_name':
         ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['BROAD_name']]
     elif ENSCAFGs[enscafg]['BROAD_name'] == 'No_name':
