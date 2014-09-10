@@ -93,17 +93,18 @@ echo -e "GTF file used:\n$gtf\n" >> $log
 # TEMPORARY: sorting file by name, otherwise, "Maximum alignment buffer size exceeded while pairing SAM alignments" error may occur.
 if [[ "$format_bam" == TRUE ]]; then
 	if [[ "$already_sorted" == FALSE ]]; then
-		samtools sort -on $input sorting > file.sorted.bam
-		mv file.sorted.bam $input
+		samtools sort -on $input sorting > file.sorted
 	fi
 else
 	if [[ "$already_sorted" == FALSE ]]; then
-		samtools sort -on $input sorting | samtools view - > file.sorted.sam
-		mv file.sorted.sam $input
+		samtools sort -on $input sorting | samtools view - > file.sorted
 	fi
 fi
 
 # Splitting the input dataset into a paired-end reads file and a single-end reads file and changing into SAM files if necessary
+if [[ "$already_sorted" == FALSE ]]; then
+	input=file.sorted
+fi
 if [[ "$format_bam" == TRUE ]]; then
 	samtools view -h -F 0x1 $input > file.tmp
 	if [[ $(awk '! /^@/' file.tmp | wc -l) -ne 0 ]]; then
@@ -153,4 +154,4 @@ else
 fi
 
 # Cleaning files
-rm -f $input_SE $input_PE file.tmp $count_SE $count_PE
+rm -f file.sorted $input_SE $input_PE file.tmp $count_SE $count_PE
