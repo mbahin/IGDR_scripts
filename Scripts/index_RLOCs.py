@@ -13,8 +13,8 @@ import argparse, sys, re
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', dest='GTF', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf')
 parser.add_argument('-b', dest='biomart', default='/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt')
-parser.add_argument('-r', dest='RLOC', default='RLOCs_index.txt')
-parser.add_argument('-e', dest='ENSCAFG', default='ENSCAFGs_index.txt')
+parser.add_argument('-r', dest='RLOC', default='/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt')
+parser.add_argument('-e', dest='ENSCAFG', default='/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt')
 options = parser.parse_args()
 
 # Indexing the GTF file
@@ -50,7 +50,7 @@ with open(options.GTF,'r') as GTF_file:
         if not RLOCs.has_key(rloc):
             RLOCs[rloc] = {}
             RLOCs[rloc]['enscafgs'] = ['No_ENSCAFG']
-            RLOCs[rloc]['orthologues'] = ''
+            RLOCs[rloc]['orthologues'] = 'NA'
             RLOCs[rloc]['biotype'] = []
 
         # Creating the ENSCAFG in the index if necessary
@@ -66,13 +66,13 @@ with open(options.GTF,'r') as GTF_file:
                     RLOCs[rloc]['enscafgs'].remove('No_ENSCAFG')
                 RLOCs[rloc]['enscafgs'].append(enscafg)
             if name != 'No_name':
-                RLOCs[rloc]['orthologues'] = '' # If there is an ENSCAFG and one of the transcripts has a gene name, then no name is needed in the RLOC index
+                RLOCs[rloc]['orthologues'] = 'NA' # If there is an ENSCAFG and one of the transcripts has a gene name, then no name is needed in the RLOC index
                 if (name != ENSCAFGs[enscafg]['BROAD_name']) and (ENSCAFGs[enscafg]['BROAD_name'] != 'No_name'):
                     print 'Warning: the BROAD provided 2 names for '+enscafg+'!'
                 elif ENSCAFGs[enscafg]['BROAD_name'] == 'No_name':
                     ENSCAFGs[enscafg]['BROAD_name'] = name
         elif (RLOCs[rloc]['enscafgs'] == ['No_ENSCAFG']) and (name != 'No_name'):
-            if (RLOCs[rloc]['orthologues'] != '') and (RLOCs[rloc]['orthologues'] != name):
+            if (RLOCs[rloc]['orthologues'] != 'NA') and (RLOCs[rloc]['orthologues'] != name):
                 print 'Warning: there are two orthologues names for '+rloc+'!'
             RLOCs[rloc]['orthologues'] = name
         if biotype not in RLOCs[rloc]['biotype']:
