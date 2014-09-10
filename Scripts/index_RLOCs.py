@@ -7,14 +7,16 @@
 # Input is a file intersecting BROAD and ensembl annotation, the GFF file corresponding and the 2 index filenames to produce.
 # Output are two tab-separated files with the RLOCs and ENSCAFGs indexes.
 
-import argparse, sys, re
+import argparse, sys, re, datetime
+
+today = str('{:02d}'.format(datetime.datetime.now().month))+'-'+str('{:02d}'.format(datetime.datetime.now().day))+'-'+str(datetime.datetime.now().year)
 
 # Getting options back
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', dest='GTF', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf')
 parser.add_argument('-b', dest='biomart', default='/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt')
-parser.add_argument('-r', dest='RLOC', default='/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt')
-parser.add_argument('-e', dest='ENSCAFG', default='/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt')
+parser.add_argument('-r', dest='RLOC', default='/home/genouest/genouest/mbahin/Annotations/RLOCs_index.'+today+'.txt')
+parser.add_argument('-e', dest='ENSCAFG', default='/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.'+today+'.txt')
 options = parser.parse_args()
 
 # Indexing the GTF file
@@ -95,25 +97,24 @@ with open(options.biomart,'r') as biomart_file:
 # Creating a consensus name column in the ENSCAFGs index
 for enscafg in ENSCAFGs:
     ENSCAFGs[enscafg]['consensus'] = []
-    if ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']:
-        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
-    elif re.match(r''+ENSCAFGs[enscafg]['ENSEMBL_name']+'_CANFA',ENSCAFGs[enscafg]['BROAD_name']):
+    if (ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']) or (re.match(r''+ENSCAFGs[enscafg]['ENSEMBL_name']+'_CANFA',ENSCAFGs[enscafg]['BROAD_name'])) or (ENSCAFGs[enscafg]['BROAD_name'] == 'No_name'):
         # If the BROAD name is different from Ensembl name only adding '_CANFA' by the end, the consensus is Ensembl name
         ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
     elif ENSCAFGs[enscafg]['ENSEMBL_name'] == 'No_name':
         ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['BROAD_name']]
-    elif ENSCAFGs[enscafg]['BROAD_name'] == 'No_name':
-        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
     else:
         ENSCAFGs[enscafg]['consensus'].append(ENSCAFGs[enscafg]['ENSEMBL_name'])
         ENSCAFGs[enscafg]['consensus'].append(ENSCAFGs[enscafg]['BROAD_name'])
 
 # Writing the output index files
+
 with open(options.RLOC,'w') as RLOC_output:
+    RLOC_output.write('RLOC\tENSCAFG(s)\tOrthologous_name\tBiotype(s)\n')
     for rloc in sorted(RLOCs):
         RLOC_output.write(rloc+'\t'+','.join(sorted(RLOCs[rloc]['enscafgs']))+'\t'+RLOCs[rloc]['orthologues']+'\t'+','.join(sorted(RLOCs[rloc]['biotype']))+'\n')
 
 with open(options.ENSCAFG,'w') as ENSCAFG_output:
+    ENSCAFG_output.write('ENSCAFG\tEnsembl_name\tBROAD_name\tConsensus_name(s)\n')
     for enscafg in sorted(ENSCAFGs):
         ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+'|'.join(sorted(ENSCAFGs[enscafg]['consensus']))+'\n')
 
