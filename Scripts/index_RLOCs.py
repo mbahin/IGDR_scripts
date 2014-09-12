@@ -13,7 +13,7 @@ today = str('{:02d}'.format(datetime.datetime.now().month))+'-'+str('{:02d}'.for
 
 # Getting options back
 parser = argparse.ArgumentParser()
-parser.add_argument('-g', dest='GTF', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf')
+parser.add_argument('-g', dest='GTF', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf')
 parser.add_argument('-b', dest='biomart', default='/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt')
 parser.add_argument('-r', dest='RLOC', default='/home/genouest/genouest/mbahin/Annotations/RLOCs_index.'+today+'.txt')
 parser.add_argument('-e', dest='ENSCAFG', default='/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.'+today+'.txt')
@@ -24,6 +24,10 @@ RLOCs = {}
 ENSCAFGs = {}
 with open(options.GTF,'r') as GTF_file:
     for line in GTF_file:
+        # Only working on the exon lines
+        if line.split('\t')[2] != 'exon':
+            continue
+
         # Getting the RLOC, ENSCAFG, gene name and biotype
         enscafg = 'No_ENSCAFG'
         name = 'No_name'
@@ -56,13 +60,16 @@ with open(options.GTF,'r') as GTF_file:
             RLOCs[rloc]['biotype'] = []
 
         # Creating the ENSCAFG in the index if necessary
-        if enscafg and (not ENSCAFGs.has_key(enscafg)):
+        if (enscafg != 'No_ENSCAFG') and (not ENSCAFGs.has_key(enscafg)):
             ENSCAFGs[enscafg] = {}
             ENSCAFGs[enscafg]['ENSEMBL_name'] = 'No_name'
             ENSCAFGs[enscafg]['BROAD_name'] = 'No_name'
+            ENSCAFGs[enscafg]['consensus_name'] = []
 
         # Filling the indexes
         if enscafg != 'No_ENSCAFG':
+            if not ENSCAFGs[enscafg].has_key('RLOC'):
+                ENSCAFGs[enscafg]['RLOC'] = rloc
             if enscafg not in RLOCs[rloc]['enscafgs']:
                 if 'No_ENSCAFG' in RLOCs[rloc]['enscafgs']:
                     RLOCs[rloc]['enscafgs'].remove('No_ENSCAFG')
@@ -96,15 +103,14 @@ with open(options.biomart,'r') as biomart_file:
 
 # Creating a consensus name column in the ENSCAFGs index
 for enscafg in ENSCAFGs:
-    ENSCAFGs[enscafg]['consensus'] = []
     if (ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']) or (re.match(r''+ENSCAFGs[enscafg]['ENSEMBL_name']+'_CANFA',ENSCAFGs[enscafg]['BROAD_name'])) or (ENSCAFGs[enscafg]['BROAD_name'] == 'No_name'):
         # If the BROAD name is different from Ensembl name only adding '_CANFA' by the end, the consensus is Ensembl name
-        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
+        ENSCAFGs[enscafg]['consensus_name'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
     elif ENSCAFGs[enscafg]['ENSEMBL_name'] == 'No_name':
-        ENSCAFGs[enscafg]['consensus'] = [ENSCAFGs[enscafg]['BROAD_name']]
+        ENSCAFGs[enscafg]['consensus_name'] = [ENSCAFGs[enscafg]['BROAD_name']]
     else:
-        ENSCAFGs[enscafg]['consensus'].append(ENSCAFGs[enscafg]['ENSEMBL_name'])
-        ENSCAFGs[enscafg]['consensus'].append(ENSCAFGs[enscafg]['BROAD_name'])
+        ENSCAFGs[enscafg]['consensus_name'].append(ENSCAFGs[enscafg]['ENSEMBL_name'])
+        ENSCAFGs[enscafg]['consensus_name'].append(ENSCAFGs[enscafg]['BROAD_name'])
 
 # Writing the output index files
 
@@ -114,9 +120,9 @@ with open(options.RLOC,'w') as RLOC_output:
         RLOC_output.write(rloc+'\t'+','.join(sorted(RLOCs[rloc]['enscafgs']))+'\t'+RLOCs[rloc]['orthologues']+'\t'+','.join(sorted(RLOCs[rloc]['biotype']))+'\n')
 
 with open(options.ENSCAFG,'w') as ENSCAFG_output:
-    ENSCAFG_output.write('ENSCAFG\tEnsembl_name\tBROAD_name\tConsensus_name(s)\n')
+    ENSCAFG_output.write('ENSCAFG\tEnsembl_name\tBROAD_name\tConsensus_name(s)\tRLOC\n')
     for enscafg in sorted(ENSCAFGs):
-        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+'|'.join(sorted(ENSCAFGs[enscafg]['consensus']))+'\n')
+        ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+'|'.join(sorted(ENSCAFGs[enscafg]['consensus_name']))+'\t'+ENSCAFGs[enscafg]['RLOC']+'\n')
 
 # Particular case: grep RLOC_00021852 $GTFv3_2
 # Giving an "aberration" in the RLOC index: RLOC_00021852	ENSCAFG00000031893,ENSCAFG00000032619	SOX2
