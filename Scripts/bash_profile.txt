@@ -1,12 +1,17 @@
+# Cutomizing the prompt
 #export PS1="\[\e[1;49;34m\][\u@\h \W $(date +%H:%M)]\$ \[\e[m\]" # With user
 export PS1="\e[1;34m[\h \e[1;32m\W\e[m \e[1;34m\A]\$ \e[m"
 
 # Aliases
-alias ls='ls'
 alias ll="ls -lhG --color"
 alias rm='rm -i'
 alias h='head -5'
 alias grep='grep --color=auto'
+#alias qs="qstat -u '*' | sed 1d | sed 1d | tr -s ' ' | cut -f5 -d' ' | sort | uniq -c | sort -nr"
+alias qs="qstat -u '*' | sed 1d | sed 1d | awk '{print \$4'} | sort | uniq -c | sort -nr"
+alias col="awk '{if (NR % 2){printf \"\033[48;5;189m\"\$0\"\033[0m\n\"}else{print \$0}}'"
+#alias col="sed -e 'N;s/\(.*\)\n\(.*\)/\x1b[48;5;189m\1\x1b[0m\n\2/'"
+alias get_PID='ps -ef | grep Inf'
 
 # Grep colors
 export GREP_COLOR='1;33'
@@ -17,13 +22,12 @@ alias htseq-count='/softs/local/python/2.7/bin/htseq-count'
 alias R='/softs/local/R/3.1.0/bin/R'
 alias Rscript='/softs/local/R/3.1.0/bin/Rscript'
 alias chimCT="$HOME/Fusion_genes/CRAC/chimCT/bin/chimCT"
-#alias qs="qstat -u '*' | sed 1d | sed 1d | tr -s ' ' | cut -f5 -d' ' | sort | uniq -c | sort -nr"
-alias qs="qstat -u '*' | sed 1d | sed 1d | awk '{print \$4'} | sort | uniq -c | sort -nr"
-alias col="awk '{if (NR % 2){printf \"\033[48;5;189m\"\$0\"\033[0m\n\"}else{print \$0}}'"
-#alias col="sed -e 'N;s/\(.*\)\n\(.*\)/\x1b[48;5;189m\1\x1b[0m\n\2/'"
 
 # Path aliases
 export DOG='/home/genouest/umr6061/recomgen/dog/mbahin'
+export DATA='/home/genouest/umr6061/recomgen/dog/data/canFam3/'
+export RLOCs='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt'
+export ENSCAFGs='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt'
 export GTFv2='/home/SAVE-OMAHA/tderrien/DATA/canFam3/annotation/MERGED_BROAD_RENNES_v2/merged_asm/merged.withStrand.gtf'
 #export GTFv3='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gtf'
 export GTFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gtf'
@@ -32,6 +36,12 @@ export GTFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/ann
 export GFFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
 export GTFv3_1='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gtf'
 export GFFv3_1='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gff'
+#export GTFv3_2='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf'
+export GTFv3_2='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf'
+#export GFFv3_2='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
+export GFFv3_2='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
+export GTF='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf'
+export GFF='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gff'
 
 # Sourcing
 . /local/env/envpython-2.7.sh
@@ -47,6 +57,7 @@ PERL5LIB=$HOME/perl
 PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5/
 PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/bin/perl/lib/
 PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/src/bioperl-1.2.3
+export PERL5LIB
 
 # Export lang
 export LC_CTYPE="en_US.UTF-8"
@@ -54,7 +65,7 @@ export LANG="C"
 export LANGUAGE="en_US"
 export LC_ALL="en_US"
 
-# Adding thousands separators
+# Adding thousands separators to line count
 wl() {
 	# The function can be used alone with a parameter or within a piped command.
 	# It is not very good with several files, better use 'wc -l'.
