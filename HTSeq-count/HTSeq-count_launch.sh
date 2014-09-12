@@ -32,7 +32,6 @@ function launch {
 	fi
 	command=$command' -q'
 	
-	echo -e "Command launched:\n$command" >> $log
 	$command > $2
 }
 
@@ -137,6 +136,7 @@ if [[ (-e $input_SE) && (-e $input_PE) ]]; then
 	
 	# Executing HTSeq-count
 	echo -e "Paired and non-paired reads processed.\n" >> $log
+	echo -e "Command(s) launched:\n$command" >> $log
 	launch $input_SE $count_SE
 	launch $input_PE $count_PE
 	
