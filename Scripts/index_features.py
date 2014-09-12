@@ -3,20 +3,20 @@
 # Mathieu Bahin, 21/05/14
 
 # Script to index the RLOCs and ENSCAFGs, 2 index files are created.
-# The RLOC index list the ENSCAFGs corresponding to each RLOC (from the file intersecting BROAD and Ensembl features). If none is found, information can sometimes be found in the GFF file (particularly human homologous gene names. If so, the second column is 'No_ENSCAFG' and the additive information is in the third column. Else, if no information can be found, the RLOC is not present in the index). Most of the times, there is the RLOC, its ENSCAFGs list and 'No_BROAD_bonus' in the third column (if an ENSCAFG is found in the intersection file, no information is searched in the GFF file).
+# The RLOC index list the ENSCAFGs corresponding to each RLOC (from the file intersecting BROAD and Ensembl features). If none is found, information can sometimes be found in the GFF file (particularly human homologous gene names. If so, the second column is 'NA' and the additive information is in the third column. Else, if no information can be found, the RLOC is not present in the index). Most of the times, there is the RLOC, its ENSCAFGs list and 'No_BROAD_bonus' in the third column (if an ENSCAFG is found in the intersection file, no information is searched in the GFF file).
 # Input is a file intersecting BROAD and ensembl annotation, the GFF file corresponding and the 2 index filenames to produce.
 # Output are two tab-separated files with the RLOCs and ENSCAFGs indexes.
 
-import argparse, sys, re, datetime
+import argparse, sys, re, datetime, os
 
 today = str('{:02d}'.format(datetime.datetime.now().month))+'-'+str('{:02d}'.format(datetime.datetime.now().day))+'-'+str(datetime.datetime.now().year)
 
 # Getting options back
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', dest='GTF', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf')
-parser.add_argument('-b', dest='biomart', default='/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt')
-parser.add_argument('-r', dest='RLOC', default='/home/genouest/genouest/mbahin/Annotations/RLOCs_index.'+today+'.txt')
-parser.add_argument('-e', dest='ENSCAFG', default='/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.'+today+'.txt')
+parser.add_argument('-b', dest='biomart', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/BioMart_paralogous.05-23-2014.txt')
+parser.add_argument('-r', dest='RLOC', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.'+today+'.txt')
+parser.add_argument('-e', dest='ENSCAFG', default='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.'+today+'.txt')
 options = parser.parse_args()
 
 # Indexing the GTF file
@@ -29,8 +29,8 @@ with open(options.GTF,'r') as GTF_file:
             continue
 
         # Getting the RLOC, ENSCAFG, gene name and biotype
-        enscafg = 'No_ENSCAFG'
-        name = 'No_name'
+        enscafg = 'NA'
+        name = 'NA'
         rloc = line.split('\t')[8].split('"')[1]
         biotype = line.split('\t')[8].split('"')[9]
         
@@ -42,7 +42,7 @@ with open(options.GTF,'r') as GTF_file:
             else:
                 tcpt = line.split('\t')[8].split('"')[3]
         else:
-            tcpt = 'No_name'
+            tcpt = 'NA'
         if line.split('\t')[8].split('"')[5] != 'NA':
             enscafg = line.split('\t')[8].split('"')[5].split(',')[0] # When there a several ENSCAFGs, they are identicals
             if not tcpt.startswith('ENSCAFG'):
@@ -55,32 +55,32 @@ with open(options.GTF,'r') as GTF_file:
         # Creating the RLOC in the index if necessary
         if not RLOCs.has_key(rloc):
             RLOCs[rloc] = {}
-            RLOCs[rloc]['enscafgs'] = ['No_ENSCAFG']
+            RLOCs[rloc]['enscafgs'] = ['NA']
             RLOCs[rloc]['orthologues'] = 'NA'
             RLOCs[rloc]['biotype'] = []
 
         # Creating the ENSCAFG in the index if necessary
-        if (enscafg != 'No_ENSCAFG') and (not ENSCAFGs.has_key(enscafg)):
+        if (enscafg != 'NA') and (not ENSCAFGs.has_key(enscafg)):
             ENSCAFGs[enscafg] = {}
-            ENSCAFGs[enscafg]['ENSEMBL_name'] = 'No_name'
-            ENSCAFGs[enscafg]['BROAD_name'] = 'No_name'
+            ENSCAFGs[enscafg]['ENSEMBL_name'] = 'NA'
+            ENSCAFGs[enscafg]['BROAD_name'] = 'NA'
             ENSCAFGs[enscafg]['consensus_name'] = []
 
         # Filling the indexes
-        if enscafg != 'No_ENSCAFG':
+        if enscafg != 'NA':
             if not ENSCAFGs[enscafg].has_key('RLOC'):
                 ENSCAFGs[enscafg]['RLOC'] = rloc
             if enscafg not in RLOCs[rloc]['enscafgs']:
-                if 'No_ENSCAFG' in RLOCs[rloc]['enscafgs']:
-                    RLOCs[rloc]['enscafgs'].remove('No_ENSCAFG')
+                if 'NA' in RLOCs[rloc]['enscafgs']:
+                    RLOCs[rloc]['enscafgs'].remove('NA')
                 RLOCs[rloc]['enscafgs'].append(enscafg)
-            if name != 'No_name':
+            if name != 'NA':
                 RLOCs[rloc]['orthologues'] = 'NA' # If there is an ENSCAFG and one of the transcripts has a gene name, then no name is needed in the RLOC index
-                if (name != ENSCAFGs[enscafg]['BROAD_name']) and (ENSCAFGs[enscafg]['BROAD_name'] != 'No_name'):
+                if (name != ENSCAFGs[enscafg]['BROAD_name']) and (ENSCAFGs[enscafg]['BROAD_name'] != 'NA'):
                     print 'Warning: the BROAD provided 2 names for '+enscafg+'!'
-                elif ENSCAFGs[enscafg]['BROAD_name'] == 'No_name':
+                elif ENSCAFGs[enscafg]['BROAD_name'] == 'NA':
                     ENSCAFGs[enscafg]['BROAD_name'] = name
-        elif (RLOCs[rloc]['enscafgs'] == ['No_ENSCAFG']) and (name != 'No_name'):
+        elif (RLOCs[rloc]['enscafgs'] == ['NA']) and (name != 'NA'):
             if (RLOCs[rloc]['orthologues'] != 'NA') and (RLOCs[rloc]['orthologues'] != name):
                 print 'Warning: there are two orthologues names for '+rloc+'!'
             RLOCs[rloc]['orthologues'] = name
@@ -96,17 +96,17 @@ with open(options.biomart,'r') as biomart_file:
         if name:
             if not ENSCAFGs.has_key(enscafg):
                 print 'Warning: '+enscafg+' was not listed in the GFF file!'
-            elif (ENSCAFGs[enscafg]['ENSEMBL_name'] != 'No_name') and (ENSCAFGs[enscafg]['ENSEMBL_name'] != name):
+            elif (ENSCAFGs[enscafg]['ENSEMBL_name'] != 'NA') and (ENSCAFGs[enscafg]['ENSEMBL_name'] != name):
                 print 'Warning: Biomart provided 2 different names for '+enscafg+'!'
             else:
                 ENSCAFGs[enscafg]['ENSEMBL_name'] = name
 
 # Creating a consensus name column in the ENSCAFGs index
 for enscafg in ENSCAFGs:
-    if (ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']) or (re.match(r''+ENSCAFGs[enscafg]['ENSEMBL_name']+'_CANFA',ENSCAFGs[enscafg]['BROAD_name'])) or (ENSCAFGs[enscafg]['BROAD_name'] == 'No_name'):
+    if (ENSCAFGs[enscafg]['ENSEMBL_name'] == ENSCAFGs[enscafg]['BROAD_name']) or (re.match(r''+ENSCAFGs[enscafg]['ENSEMBL_name']+'_CANFA',ENSCAFGs[enscafg]['BROAD_name'])) or (ENSCAFGs[enscafg]['BROAD_name'] == 'NA'):
         # If the BROAD name is different from Ensembl name only adding '_CANFA' by the end, the consensus is Ensembl name
         ENSCAFGs[enscafg]['consensus_name'] = [ENSCAFGs[enscafg]['ENSEMBL_name']]
-    elif ENSCAFGs[enscafg]['ENSEMBL_name'] == 'No_name':
+    elif ENSCAFGs[enscafg]['ENSEMBL_name'] == 'NA':
         ENSCAFGs[enscafg]['consensus_name'] = [ENSCAFGs[enscafg]['BROAD_name']]
     else:
         ENSCAFGs[enscafg]['consensus_name'].append(ENSCAFGs[enscafg]['ENSEMBL_name'])
@@ -124,5 +124,8 @@ with open(options.ENSCAFG,'w') as ENSCAFG_output:
     for enscafg in sorted(ENSCAFGs):
         ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+'|'.join(sorted(ENSCAFGs[enscafg]['consensus_name']))+'\t'+ENSCAFGs[enscafg]['RLOC']+'\n')
 
-# Particular case: grep RLOC_00021852 $GTFv3_2
-# Giving an "aberration" in the RLOC index: RLOC_00021852	ENSCAFG00000031893,ENSCAFG00000032619	SOX2
+# Creating the symbolic link pointing at the current indexes versions
+os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
+os.symlink(options.RLOC,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
+os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
+os.symlink(options.ENSCAFG,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
