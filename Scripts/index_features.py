@@ -24,10 +24,6 @@ RLOCs = {}
 ENSCAFGs = {}
 with open(options.GTF,'r') as GTF_file:
     for line in GTF_file:
-        # Only working on the exon lines
-        if line.split('\t')[2] != 'exon':
-            continue
-
         # Getting the RLOC, ENSCAFG, gene name and biotype
         enscafg = 'NA'
         name = 'NA'
@@ -112,8 +108,13 @@ for enscafg in ENSCAFGs:
         ENSCAFGs[enscafg]['consensus_name'].append(ENSCAFGs[enscafg]['ENSEMBL_name'])
         ENSCAFGs[enscafg]['consensus_name'].append(ENSCAFGs[enscafg]['BROAD_name'])
 
-# Writing the output index files
+# Checking if the outputs already exist
+if os.path.isfile('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.'+today+'.txt'):
+    os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.'+today+'.txt')
+if os.path.isfile('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.'+today+'.txt'):
+    os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.'+today+'.txt')
 
+# Writing the output index files
 with open(options.RLOC,'w') as RLOC_output:
     RLOC_output.write('RLOC\tENSCAFG(s)\tOrthologous_name\tBiotype(s)\n')
     for rloc in sorted(RLOCs):
@@ -125,7 +126,7 @@ with open(options.ENSCAFG,'w') as ENSCAFG_output:
         ENSCAFG_output.write(enscafg+'\t'+ENSCAFGs[enscafg]['ENSEMBL_name']+'\t'+ENSCAFGs[enscafg]['BROAD_name']+'\t'+'|'.join(sorted(ENSCAFGs[enscafg]['consensus_name']))+'\t'+ENSCAFGs[enscafg]['RLOC']+'\n')
 
 # Creating the symbolic link pointing at the current indexes versions
-os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
-os.symlink(options.ENSCAFG,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
 os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
 os.symlink(options.RLOC,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
+os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
+os.symlink(options.ENSCAFG,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
