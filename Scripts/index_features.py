@@ -126,6 +126,6 @@ with open(options.ENSCAFG,'w') as ENSCAFG_output:
 
 # Creating the symbolic link pointing at the current indexes versions
 os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
-os.symlink(options.RLOC,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
+os.symlink(options.ENSCAFG,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt')
 os.remove('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
-os.symlink(options.ENSCAFG,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
+os.symlink(options.RLOC,'/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt')
