@@ -151,17 +151,20 @@ scores_file.close()
 venn_file.close()
 
 # Logging some statistics and printing it
-with open('file.statistics.txt','w') as stat_file:
-    stat_file.write('DE gene(s) found: '+str(DE_genes)+'\n')
-    stat_file.write('\tRegulation\n')
-    stat_file.write('\t\tUp-regulated gene(s): '+str(upreg)+'\n')
-    stat_file.write('\t\tDown-regulated gene(s): '+str(downreg)+'\n')
-    stat_file.write('\t\tAmbiguously regulated gene(s): '+str(ambiguous)+'\n')
-    stat_file.write('\tBiotypes\n')
-    stat_file.write('\t\tProtein coding: '+str(protein_coding)+'\n')
-    stat_file.write('\t\tLncRNA: '+str(lncRNA)+'\n')
-    stat_file.write('\t\tAmbiguous / Other: '+str(other)+'\n')
-    stat_file.write('\tGene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))+'\n')
+if DE_genes == 0:
+    print 'No DE gene found for this analysis.'
+else:
+    with open('file.statistics.txt','w') as stat_file:
+        stat_file.write('DE gene(s) found: '+str(DE_genes)+'\n')
+        stat_file.write('\tRegulation\n')
+        stat_file.write('\t\tUp-regulated gene(s): '+str(upreg)+'\n')
+        stat_file.write('\t\tDown-regulated gene(s): '+str(downreg)+'\n')
+        stat_file.write('\t\tAmbiguously regulated gene(s): '+str(ambiguous)+'\n')
+        stat_file.write('\tBiotypes\n')
+        stat_file.write('\t\tProtein coding: '+str(protein_coding)+'\n')
+        stat_file.write('\t\tLncRNA: '+str(lncRNA)+'\n')
+        stat_file.write('\t\tAmbiguous / Other: '+str(other)+'\n')
+        stat_file.write('\tGene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))+'\n')
 
-with open ('file.statistics.txt','r') as stat_file:
-    shutil.copyfileobj(stat_file, sys.stdout)
+    with open ('file.statistics.txt','r') as stat_file:
+        shutil.copyfileobj(stat_file, sys.stdout)
