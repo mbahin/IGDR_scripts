@@ -83,7 +83,7 @@ def get_fasta(sense):
         os.remove('file.first_mates.bam')
         os.remove('file.second_mates.bam')
         os.remove('file.merged_mates.bam')
-    #os.remove('file.merged_mates.sam')
+    os.remove('file.merged_mates.sam')
 
 ##### Functions end
 
@@ -188,27 +188,8 @@ if options.feat2 and (options.feat2 not in feat_index):
 """
 
 # Defining the RLOCs requested
-if options.feat1.startswith('ENSCAFG'):
-    rloc1 = ENSCAFGs[options.feat1]['RLOC']
-else:
-    rloc1 = ''
-    for enscafg in gene_names[options.feat1]:
-        if rloc1 and (ENSCAFGs[enscafg]['RLOC'] != rloc1):
-            print 'The gene name you requested can refer to several ENSCAFGs, please provide the ENSCAFG you are interested in. Aborting.'
-            sys.exit()
-        else:
-            rloc1 = ENSCAFGs[enscafg]['RLOC']
-
-if options.feat2.startswith('ENSCAFG'):
-    rloc2 = ENSCAFGs[options.feat2]['RLOC']
-else:
-    rloc2 = ''
-    for enscafg in gene_names[options.feat2]:
-        if rloc2 and (ENSCAFGs[enscafg]['RLOC'] != rloc2):
-            print 'The gene name you requested can refer to several ENSCAFGs, please provide the ENSCAFG you are interested in. Aborting.'
-            sys.exit()
-        else:
-            rloc2 = ENSCAFGs[enscafg]['RLOC']
+rloc1 = classics.get_RLOC_from_feat(options.feat1)
+rloc2 = classics.get_RLOC_from_feat(options.feat2)
 
 # Getting the interval terminals
 if options.total:
