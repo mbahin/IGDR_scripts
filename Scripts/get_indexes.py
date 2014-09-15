@@ -8,7 +8,19 @@ RLOCs = {}
 ENSCAFGs = {}
 
 def index_RLOCs():
-    global RLOCs
+    #####
+    # 1) Indexing the RLOCs from the file 'RLOCs_index.txt' into a dictionary, 'RLOCs'. There are 3 fields :
+    #   - 'enscafgs' (list) : the ENSCAFG(s) list associated to the RLOC.
+    #   - 'orthologous' : a human orthologous gene name if one can be found and if there is no ENSCAFG associated to the RLOC.
+    #   - 'biotypes' (list) : the biotypes() (uniqued) list corresponding to the ENSCAFG(s) list.
+    #
+    # 2) Indexing the ENSCAFGs from the file 'ENSCAFGs_index.txt' into a dictionary, 'ENSCAFGs'. There are 4s fields :
+    #   - 'Ensembl_name' : the Ensembl gene name.
+    #   - 'BROAD_name' : the BROAD gene name.
+    #   - 'consensus_names' (list) : the (uniqued) gene name(s) list from Ensembl and the BROAD.
+    #   - 'RLOC' : the RLOC corresponding to the ENSCAFG.
+    #####
+
     with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt','r') as RLOCs_file:
         # Ignoring the header
         RLOCs_file.readline()
@@ -31,4 +43,7 @@ with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspon
             ENSCAFGs[enscafg] = {}
         ENSCAFGs[enscafg]['Ensembl_name'] = line.split('\t')[1]
         ENSCAFGs[enscafg]['BROAD_name'] = line.split('\t')[2]
-        ENSCAFGs[enscafg]['consensus_name'] = line.rstrip().split('\t')[3]
+        ENSCAFGs[enscafg]['consensus_names'] = line.split('\t')[3].split('|')
+        ENSCAFGs[enscafg]['RLOC'] = line.rstrip().split('\t')[4]
+
+index_RLOCs()
