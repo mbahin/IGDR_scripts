@@ -1,7 +1,7 @@
 #!/local/python/2.7/bin/python
 
 # Mathieu Bahin, 12/06/14
-# Last update: 27/08/14
+# Last update: 15/09/14
 
 # Script to get the split reads involved in and the paired-end reads around a breakpoint from files produced by CRAC.
 # Inputs:
@@ -19,6 +19,14 @@
 
 import os, argparse, sys, re, shutil
 
+# Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
+sys.path.insert(1, '/home/genouest/genouest/mbahin/Scripts')
+import classics, get_indexes
+RLOCs = get_indexes.RLOCs
+ENSCAFGs = get_indexes.ENSCAFGs
+gene_names = get_indexes.gene_names
+sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
+
 ###### Functions
 
 def get_fasta(sense):
@@ -27,21 +35,25 @@ def get_fasta(sense):
     # The parameter indicate wether the operation is done in the sense or the reverse sense.
     #####
 
-    # Getting first mates in the first area of interest
-    if sense:
-        os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
-    else:
-        os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
+    if options.feat2:
+         # Getting first mates in the first area of interest
+        if sense:
+            os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
+        else:
+            os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
 
-    # Getting second mates in the second area of interest
-    if sense:
-        os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
+        # Getting second mates in the second area of interest
+        if sense:
+            os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
+        else:
+            os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
     else:
-        os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
+        os.system('samtools view '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.merged_mates.sam')
 
     # Getting paired-end reads with the two mates in the two area of interest
-    os.system('samtools merge -nu file.merged_mates.bam file.first_mates.bam file.second_mates.bam')
-    os.system('samtools view file.merged_mates.bam > file.merged_mates.sam')
+    if options.feat2:
+        os.system('samtools merge -nu file.merged_mates.bam file.first_mates.bam file.second_mates.bam')
+        os.system('samtools view file.merged_mates.bam > file.merged_mates.sam')
 
     SAM_file = open('file.merged_mates.sam','r')
     if sense:
@@ -67,10 +79,11 @@ def get_fasta(sense):
     SAM_file.close()
     
     # Cleaning
-    os.remove('file.first_mates.bam')
-    os.remove('file.second_mates.bam')
-    os.remove('file.merged_mates.bam')
-    os.remove('file.merged_mates.sam')
+    if options.feat2:
+        os.remove('file.first_mates.bam')
+        os.remove('file.second_mates.bam')
+        os.remove('file.merged_mates.bam')
+    #os.remove('file.merged_mates.sam')
 
 ##### Functions end
 
@@ -85,7 +98,7 @@ parser.add_argument('-d', dest='dir')
 parser.add_argument('-p', dest='processed_dir', required=True)
 parser.add_argument('-b', dest='bkpt')
 parser.add_argument('-f', dest='feat1', required=True)
-parser.add_argument('-g', dest='feat2', required=True)
+parser.add_argument('-g', dest='feat2')
 parser.add_argument('-n', dest='nt', type=int, default=1)
 parser.add_argument('-t', dest='total', action='store_true')
 options = parser.parse_args()
@@ -97,7 +110,7 @@ if not options.processed_dir.startswith('/'):
     print 'The "processed.dir" directory path specified must be an absolute path. Aborting.'
     sys.exit()
 
-# Creating a directory for the job
+# Creating and going to a directory for the job
 if options.dir != None:
     dir_name = options.dir
 else:
@@ -107,12 +120,7 @@ if not options.total:
 else:
     dir_name = dir_name+'.full_feat.dir'
 
-if not os.path.exists(dir_name):
-    os.makedirs(dir_name)
-    os.chdir(dir_name)
-else:
-    print 'The directory '+dir_name+' already exists. Aborting.'
-    sys.exit()
+classics.create_wd(dir_name)
 
 print '#####'
 
@@ -152,87 +160,79 @@ if not options.total:
     fasta_file.close()
 
 #####
-# Indexing RLOCs, ENSCAFGs, gene names and positions
+# Indexing RLOCs coordinates
 #####
-
-# Linking ENSCAFGs and gene names
-gene_names = {}
-with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
-    for line in ENSCAFGs_file:
-        enscafg = line.split('\t')[0]
-        gene_names[enscafg] = line.rstrip().split('\t')[3].split(',')
-
-# Linking ENSCAFGs/gene names and RLOCs
-RLOCs_index = {}
-feat_index = {}
-with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as RLOCs_file:
-    for line in RLOCs_file:
-        rloc = line.split('\t')[0]
-        enscafg_list = line.split('\t')[1].split(',')
-        if enscafg_list == ['No_ENSCAFG']:
-            if line.split('\t')[2] != '':
-                feat_index[line.split('\t')[2]] = rloc
-            continue
-        for enscafg in enscafg_list:
-            if feat_index.has_key(enscafg):
-                feat_index[enscafg] = 'Multiple'
-            else:
-                feat_index[enscafg] = rloc
-            if gene_names.has_key(enscafg):
-                for gene_name in gene_names[enscafg]:
-                    if feat_index.has_key(gene_name):
-                        feat_index[gene_name] = 'Multiple'
-                    else:
-                        feat_index[gene_name] = rloc
-
-# Indexing RLOC coordinates
 with open(GFF,'r') as GFF_file:
     for line in GFF_file:
-        if line.split('\t')[2] != 'gene':
-            continue
-        else:
+        if line.split('\t')[2] == 'gene':
             rloc = line.split('\t')[8].split(';')[0].split('=')[1]
-            RLOCs_index[rloc] = {}
-            RLOCs_index[rloc]['chr'] = line.split('\t')[0]
-            RLOCs_index[rloc]['start'] = line.split('\t')[3]
-            RLOCs_index[rloc]['end'] = line.split('\t')[4]
+            RLOCs[rloc]['chr'] = line.split('\t')[0]
+            RLOCs[rloc]['start'] = line.split('\t')[3]
+            RLOCs[rloc]['end'] = line.split('\t')[4]
 
 #####
 # Getting the paired-end reads around the breakpoint
 #####
-
+"""
 # Checking the features
-if (options.feat1 not in feat_index) or (options.feat2 not in feat_index):
-    if options.feat1 not in feat_index:
-        print 'Warning: the first feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
-    else:
-        print 'Warning: the second feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
+if options.feat1 not in feat_index:
+    print 'Warning: the first feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
     os.chdir('..')
     shutil.rmtree(dir_name)
     sys.exit()
+if options.feat2 and (options.feat2 not in feat_index):
+    print 'Warning: the second feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
+    os.chdir('..')
+    shutil.rmtree(dir_name)
+    sys.exit()
+"""
+
+# Defining the RLOCs requested
+if options.feat1.startswith('ENSCAFG'):
+    rloc1 = ENSCAFGs[options.feat1]['RLOC']
+else:
+    rloc1 = ''
+    for enscafg in gene_names[options.feat1]:
+        if rloc1 and (ENSCAFGs[enscafg]['RLOC'] != rloc1):
+            print 'The gene name you requested can refer to several ENSCAFGs, please provide the ENSCAFG you are interested in. Aborting.'
+            sys.exit()
+        else:
+            rloc1 = ENSCAFGs[enscafg]['RLOC']
+
+if options.feat2.startswith('ENSCAFG'):
+    rloc2 = ENSCAFGs[options.feat2]['RLOC']
+else:
+    rloc2 = ''
+    for enscafg in gene_names[options.feat2]:
+        if rloc2 and (ENSCAFGs[enscafg]['RLOC'] != rloc2):
+            print 'The gene name you requested can refer to several ENSCAFGs, please provide the ENSCAFG you are interested in. Aborting.'
+            sys.exit()
+        else:
+            rloc2 = ENSCAFGs[enscafg]['RLOC']
 
 # Getting the interval terminals
 if options.total:
     if options.feat1 != 'No_match':
-        feat1_beg = RLOCs_index[feat_index[options.feat1]]['start']
-        feat1_end = RLOCs_index[feat_index[options.feat1]]['end']
+        feat1_beg = RLOCs[rloc1]['start']
+        feat1_end = RLOCs[rloc1]['end']
     else:
         feat1_beg = str(int(end1) - 1000 * options.nt)
         feat1_end = str(int(end1) + 1000 * options.nt)
-    if options.feat2 != 'No_match':
-        feat2_beg = RLOCs_index[feat_index[options.feat2]]['start']
-        feat2_end = RLOCs_index[feat_index[options.feat2]]['end']
-    else:
-        feat2_beg = str(int(start2) - 1000 * options.nt)
-        feat2_end = str(int(start2) + 1000 * options.nt)
+    if options.feat2:
+        if options.feat2 != 'No_match':
+            feat2_beg = RLOCs[rloc2]['start']
+            feat2_end = RLOCs[rloc2]['end']
+        else:
+            feat2_beg = str(int(start2) - 1000 * options.nt)
+            feat2_end = str(int(start2) + 1000 * options.nt)
 else:
     if options.feat1 != 'No_match':
         if strand1 == '1':
-            feat1_beg = RLOCs_index[feat_index[options.feat1]]['start']
+            feat1_beg = RLOCs[rloc1]['start']
             feat1_end = end1
         else:
             feat1_beg = end1
-            feat1_end = RLOCs_index[feat_index[options.feat1]]['end']
+            feat1_end = RLOCs[rloc1]['end']
     else:
         if strand1 == '1':
             feat1_beg = str(int(end1) - 1000 * options.nt)
@@ -243,9 +243,9 @@ else:
     if options.feat2 != 'No_match':
         if strand2 == '1':
             feat2_beg = start2
-            feat2_end = RLOCs_index[feat_index[options.feat2]]['end']
+            feat2_end = RLOCs[rloc2]['end']
         else:
-            feat2_beg = RLOCs_index[feat_index[options.feat2]]['start']
+            feat2_beg = RLOCs[rloc2]['start']
             feat2_end = start2
     else:
         if strand2 == '1':
@@ -257,23 +257,32 @@ else:
 
 # Finding chromosomes if full feature mode chosen (no breakpoint provided)
 if options.total:
-    chr1 = RLOCs_index[feat_index[options.feat1]]['chr']
-    chr2 = RLOCs_index[feat_index[options.feat2]]['chr']
+    chr1 = RLOCs[rloc1]['chr']
+    if options.feat2:
+        chr2 = RLOCs[rloc2]['chr']
 
 # Getting a BAM file with paired-end reads in the area of interest
-print 'Searching reads within '+chr1+':'+feat1_beg+'-'+feat1_end+' and '+chr2+':'+feat2_beg+'-'+feat2_end
+if options.feat2:
+    print 'Searching reads within '+chr1+':'+feat1_beg+'-'+feat1_end+' and '+chr2+':'+feat2_beg+'-'+feat2_end
+else:
+    print 'Searching reads involving '+chr1+':'+feat1_beg+'-'+feat1_end
 
 # Getting fasta files for sense and reverse sense fusions
-get_fasta(True)
-get_fasta(False)
+if options.feat2:
+    get_fasta(True)
+    get_fasta(False)
+else:
+    get_fasta(True)
 
 # Merging the sense and reverse fasta files
 spanning_PE_output = open('spanning_PE_reads.fasta','w')
 shutil.copyfileobj(open('output.fasta','r'), spanning_PE_output)
-shutil.copyfileobj(open('output.rev.fasta','r'), spanning_PE_output)
+if options.feat2:
+    shutil.copyfileobj(open('output.rev.fasta','r'), spanning_PE_output)
 spanning_PE_output.close()
 os.remove('output.fasta')
-os.remove('output.rev.fasta')
+if options.feat2:
+    os.remove('output.rev.fasta')
 
 #####
 # Making the contigs with CAP3
