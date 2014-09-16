@@ -1,7 +1,7 @@
 #!/local/python/2.7/bin/python
 
 # Mathieu Bahin, 04/04/14
-# Last update: 08/09/14
+# Last update: 15/09/14
 
 import os, argparse, shutil, sys
 
@@ -15,22 +15,12 @@ parser.add_argument('-d', dest='DESeq2_file')
 parser.add_argument('-e', dest='edgeR_file')
 options = parser.parse_args()
 
-# Indexing the RLOCs index
-RLOCs_index = {}
-with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt','r') as RLOCs_file:
-    for line in RLOCs_file:
-        rloc = line.split('\t')[0]
-        RLOCs_index[rloc] = {}
-        RLOCs_index[rloc]['enscafgs'] = line.split('\t')[1].split(',')
-        RLOCs_index[rloc]['name'] = line.split('\t')[2]
-        RLOCs_index[rloc]['biotype'] = line.rstrip().split('\t')[3].split(',')
-
-# Indexing the ENSCAFGs index
-ENSCAFGs = {}
-with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt','r') as ENSCAFGs_file:
-    for line in ENSCAFGs_file:
-        enscafg = line.split('\t')[0]
-        ENSCAFGs[enscafg] = line.rstrip().split('\t')[3]
+# Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
+sys.path.insert(1, '/home/genouest/genouest/mbahin/Scripts')
+import classics, get_indexes
+RLOCs = get_indexes.RLOCs
+ENSCAFGs = get_indexes.ENSCAFGs
+sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
 
 # Indexing the cancer gene list
 cancer_mutations = []
@@ -105,9 +95,11 @@ for xloc in results:
             DE_genes += 1
 
             # Determining if the gene is in the candidates list
-            if RLOCs_index.has_key(xloc):
+            #if RLOCs_index.has_key(xloc):
+            if RLOCs.has_key(xloc):
                 cancer_known = False
-                for enscafg in RLOCs_index[xloc]['enscafgs']:
+                #for enscafg in RLOCs_index[xloc]['enscafgs']:
+                for enscafg in RLOCs[xloc]['enscafgs']:
                     if enscafg in cancer_mutations:
                         cancer_known = True
                         cancer_known_nb += 1
@@ -118,22 +110,25 @@ for xloc in results:
                     cancer_known = 'Not_listed'
 
             # Writing the output file 'file.gene_id.list'
-            gene_id_file.write(xloc+'\t'+','.join(RLOCs_index[xloc]['enscafgs'])+'\t')
-            if RLOCs_index[xloc]['enscafgs'] == ['No_ENSCAFG']:
-                gene_id_file.write(RLOCs_index[xloc]['name'])
+            gene_id_file.write(xloc+'\t'+','.join(RLOCs[xloc]['enscafgs'])+'\t')
+            if RLOCs[xloc]['enscafgs'] == ['NA']:
+                gene_id_file.write(RLOCs[xloc]['orthologous'])
             else:
                 names = []
-                for enscafg in RLOCs_index[xloc]['enscafgs']:
-                    names.append(ENSCAFGs[enscafg])
+                for enscafg in RLOCs[xloc]['enscafgs']:
+                    if (names == []) or (ENSCAFGs[enscafg]['consensus_names'] != 'NA'):
+                        names.append('|'.join(ENSCAFGs[enscafg]['consensus_names']))
                 gene_id_file.write('\t'+','.join(names))
-            gene_id_file.write('\t'+','.join(RLOCs_index[xloc]['biotype']))
+            gene_id_file.write('\t'+','.join(RLOCs[xloc]['biotypes']))
+
             # Updating biotype statistics
-            if RLOCs_index[xloc]['biotype'] == ['protein_coding']:
+            if RLOCs[xloc]['biotypes'] == ['protein_coding']:
                 protein_coding += 1
-            elif RLOCs_index[xloc]['biotype'] == ['lncRNA']:
+            elif RLOCs[xloc]['biotypes'] == ['lncRNA']:
                 lncRNA += 1
             else:
                 other += 1
+
             # Determining the regulation and cancer list belonging
             if (results[xloc]['DESeq2_fc'] == results[xloc]['edgeR_fc']) and (results[xloc]['DESeq2_fc'] == 'up'):
                 upreg += 1
