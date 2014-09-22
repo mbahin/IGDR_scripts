@@ -102,70 +102,62 @@ def write_res(file,one_feat):
 ##### Functions end
 
 # Indexing the RLOCs index
-RLOCs_file = open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r')
 RLOCs_index = {}
-for line in RLOCs_file:
-    rloc = line.split('\t')[0]
-    if not RLOCs_index.has_key(rloc):
-        RLOCs_index[rloc] = {}
-    RLOCs_index[rloc]['enscafg'] = line.split('\t')[1].split(',')
-    RLOCs_index[rloc]['BROAD_bonus'] = line.rstrip().split('\t')[2]
-
+with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as RLOCs_file:
+    for line in RLOCs_file:
+        rloc = line.split('\t')[0]
+        if not RLOCs_index.has_key(rloc):
+            RLOCs_index[rloc] = {}
+        RLOCs_index[rloc]['enscafg'] = line.split('\t')[1].split(',')
+        RLOCs_index[rloc]['BROAD_bonus'] = line.rstrip().split('\t')[2]
+        
 #for i in RLOCs_index:
 #    print i,RLOCs_index[i]
-RLOCs_file.close()
 
 # Indexing the ENSCAFGs index (from TD intersection between BROAD and ensembl transcript files)
-ENSCAFGs_TD_file = open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r')
 ENSCAFGs_TD = {}
-for line in ENSCAFGs_TD_file:
-    enscafg = line.split('\t')[0]
-    if not ENSCAFGs_TD.has_key(enscafg):
-        ENSCAFGs_TD[enscafg] = {}
-    ENSCAFGs_TD[enscafg]['gene_name'] = line.split('\t')[1]
-    ENSCAFGs_TD[enscafg]['biotype'] = line.rstrip().split('\t')[2]
+with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_TD_file:
+    for line in ENSCAFGs_TD_file:
+        enscafg = line.split('\t')[0]
+        if not ENSCAFGs_TD.has_key(enscafg):
+            ENSCAFGs_TD[enscafg] = {}
+        ENSCAFGs_TD[enscafg]['gene_name'] = line.split('\t')[1]
+        ENSCAFGs_TD[enscafg]['biotype'] = line.rstrip().split('\t')[2]
 
 #for i in ENSCAFGs_TD:
 #    print i,ENSCAFGs_TD[i]
-ENSCAFGs_TD_file.close()
 
 # Indexing the paralogues file (from BioMart)
-paral_file = open('/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt','r')
-#paral_file = open('/home/genouest/umr6061/recomgen/dog/mbahin/Fusion-genes/CRAC/chimCT/paralogous_test.txt','r')
 ENSCAFGs_BM = {}
-paral_file.readline()
-for line in paral_file:
-    enscafg,gene_name,paralog = line.split('\t')[0:3]
-    paralogy_type = line.split('\t')[3].rstrip()
-    if gene_name == '':
-        gene_name = 'No_name'
-    if not ENSCAFGs_BM.has_key(enscafg):
-        ENSCAFGs_BM[enscafg] = {}
-        ENSCAFGs_BM[enscafg]['gene_name'] = gene_name
-        ENSCAFGs_BM[enscafg]['paralogy_type'] = []
-        ENSCAFGs_BM[enscafg]['paralogous_genes'] = []
-    ENSCAFGs_BM[enscafg]['paralogous_genes'].append(paralog)
-    ENSCAFGs_BM[enscafg]['paralogy_type'].append(paralogy_type)
+with open('/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt','r') as paral_file:
+    paral_file.readline()
+    for line in paral_file:
+        enscafg,gene_name,paralog = line.split('\t')[0:3]
+        paralogy_type = line.split('\t')[3].rstrip()
+        if gene_name == '':
+            gene_name = 'No_name'
+        if not ENSCAFGs_BM.has_key(enscafg):
+            ENSCAFGs_BM[enscafg] = {}
+            ENSCAFGs_BM[enscafg]['gene_name'] = gene_name
+            ENSCAFGs_BM[enscafg]['paralogy_type'] = []
+            ENSCAFGs_BM[enscafg]['paralogous_genes'] = []
+        ENSCAFGs_BM[enscafg]['paralogous_genes'].append(paralog)
+        ENSCAFGs_BM[enscafg]['paralogy_type'].append(paralogy_type)
 
 #for i in ENSCAFGs_BM:
 #    print i,ENSCAFGs_BM[i]
-paral_file.close()
 
 # Indexing the cancer mutation list
-mutation_file = open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r')
 mutations = []
-for line in mutation_file:
-    mutations.append(line.split('\t')[0])
-
-mutation_file.close()
+with open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r') as mutation_file:
+    for line in mutation_file:
+        mutations.append(line.split('\t')[0])
 
 # Indexing the cancer translocation list
-translocation_file = open('/home/genouest/genouest/mbahin/Annotations/translocation_gene_list.txt','r')
 translocations = []
-for line in translocation_file:
-    translocations.append(line.split('\t')[0])
-
-translocation_file.close()
+with open('/home/genouest/genouest/mbahin/Annotations/translocation_gene_list.txt','r') as translocation_file:
+    for line in translocation_file:
+        translocations.append(line.split('\t')[0])
 
 # Processing chimCT output
 input = open(options.input+'/file.chim.txt','r')
