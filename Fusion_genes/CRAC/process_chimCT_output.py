@@ -8,7 +8,13 @@
 
 import argparse, sys, shutil, re, os
 from collections import OrderedDict
-from subprocess import *
+
+# Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
+sys.path.insert(1, '/home/genouest/genouest/mbahin/Scripts')
+import classics, get_indexes
+RLOCs = get_indexes.RLOCs
+ENSCAFGs = get_indexes.ENSCAFGs
+sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
 
 # Getting options back
 parser = argparse.ArgumentParser()
@@ -30,14 +36,8 @@ if not os.path.isdir(options.input):
     sys.exit()
 
 # Creating the directory to store result files
-directory = options.sample_name+'_processed.dir'
-if not os.path.exists(directory):
-    os.makedirs(directory)
-    os.chdir(directory)
-    os.getcwd()
-else:
-    print 'The directory '+directory+' already exists. Aborting.'
-    sys.exit()
+dir_name = options.sample_name+'_processed.dir'
+classics.create_wd(dir_name)
 
 ###### Functions
 
@@ -45,22 +45,14 @@ def write_RLOC_info(rloc,file,part):
     #####
     # Function to write the info on a RLOC (ENSCAFGs, gene name from BioMart and the BROAD and gene biotype) into the result files.
     #####
-    if RLOCs_index.has_key(rloc):
-        if RLOCs_index[rloc]['enscafg'] != ['No_ENSCAFG']:
-            file.write(','.join(RLOCs_index[rloc]['enscafg']))
+    if RLOCs.has_key(rloc):
+        if RLOCs[rloc]['enscafgs'] != ['NA']:
+            file.write(','.join(RLOCs[rloc]['enscafgs']))
             names = []
-            biotype = []
             in_mutation_list = []
             in_translocation_list = []
-            for enscafg in RLOCs_index[rloc]['enscafg']:
-            #for enscafg in enscafg_list:
-                BM_name = ENSCAFGs_BM[enscafg]['gene_name']
-                TD_name = ENSCAFGs_TD[enscafg]['gene_name']
-                if BM_name == TD_name:
-                    names.append(BM_name)
-                else:
-                    names.append(BM_name+'||'+TD_name)
-                biotype.append(ENSCAFGs_TD[enscafg]['biotype'])
+            for enscafg in RLOCs[rloc]['enscafgs']:
+                names = names + ENSCAFGs[enscafg]['consensus_names']
                 if enscafg in mutations:
                     in_mutation_list.append('Yes')
                 else:
@@ -69,11 +61,12 @@ def write_RLOC_info(rloc,file,part):
                     in_translocation_list.append('Yes')
                 else:
                     in_translocation_list.append('No')
-            file.write('\t'+','.join(names)+'\t'+','.join(biotype)+'\t'+','.join(in_mutation_list)+'\t'+','.join(in_translocation_list)+'\t')
+            biotypes = RLOCs[rloc]['biotypes']
+            file.write('\t'+','.join(names)+'\t'+','.join(biotypes)+'\t'+','.join(in_mutation_list)+'\t'+','.join(in_translocation_list)+'\t')
         else:
-            file.write('No_ENSCAFG\t'+RLOCs_index[rloc]['BROAD_bonus']+'\tNA\tNA\tNA\t')
+            file.write('No_ENSCAFG\t'+RLOCs[rloc]['orthologous']+'\tNA\tNA\tNA\t')
     else:
-        file.write('No_feat\tNA\tNA\tNA\tNA\t')
+        file.write('No_ENSCAFG\tNA\tNA\tNA\tNA\t')
 
 def write_res(file,one_feat):
     #####
@@ -89,63 +82,35 @@ def write_res(file,one_feat):
         breakpoints.append('('+str(pos[0])+':'+str(pos[1])+','+str(pos[2])+' / '+str(pos[3])+':'+str(pos[4])+','+str(pos[5])+' # '+str(pos[6])+','+str(pos[7])+')')
     file.write(','.join(breakpoints)+'\t'+str(','.join(orderedChim[chim]['warnings']))+'\t')
     if one_feat == 'First':
-        write_RLOC_info(RLOCs[0],file,1)
+        write_RLOC_info(feats[0],file,1)
         file.write('\n')
     elif one_feat == 'Second':
-        write_RLOC_info(RLOCs[1],file,2)
+        write_RLOC_info(feats[1],file,2)
         file.write('\n')
     else:
         i = 1
-        for rloc in RLOCs:
+        for rloc in feats:
             write_RLOC_info(rloc,file,i)
             i+= 1
 ##### Functions end
 
-# Indexing the RLOCs index
-RLOCs_index = {}
-with open('/home/genouest/genouest/mbahin/Annotations/RLOCs_index.txt','r') as RLOCs_file:
-    for line in RLOCs_file:
-        rloc = line.split('\t')[0]
-        if not RLOCs_index.has_key(rloc):
-            RLOCs_index[rloc] = {}
-        RLOCs_index[rloc]['enscafg'] = line.split('\t')[1].split(',')
-        RLOCs_index[rloc]['BROAD_bonus'] = line.rstrip().split('\t')[2]
-        
-#for i in RLOCs_index:
-#    print i,RLOCs_index[i]
-
-# Indexing the ENSCAFGs index (from TD intersection between BROAD and ensembl transcript files)
-ENSCAFGs_TD = {}
-with open('/home/genouest/genouest/mbahin/Annotations/ENSCAFGs_index.txt','r') as ENSCAFGs_TD_file:
-    for line in ENSCAFGs_TD_file:
-        enscafg = line.split('\t')[0]
-        if not ENSCAFGs_TD.has_key(enscafg):
-            ENSCAFGs_TD[enscafg] = {}
-        ENSCAFGs_TD[enscafg]['gene_name'] = line.split('\t')[1]
-        ENSCAFGs_TD[enscafg]['biotype'] = line.rstrip().split('\t')[2]
-
-#for i in ENSCAFGs_TD:
-#    print i,ENSCAFGs_TD[i]
-
 # Indexing the paralogues file (from BioMart)
-ENSCAFGs_BM = {}
-with open('/home/genouest/genouest/mbahin/Annotations/BioMart_paralogous_140523.txt','r') as paral_file:
+with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/BioMart_paralogous.txt','r') as paral_file:
     paral_file.readline()
     for line in paral_file:
-        enscafg,gene_name,paralog = line.split('\t')[0:3]
-        paralogy_type = line.split('\t')[3].rstrip()
-        if gene_name == '':
-            gene_name = 'No_name'
-        if not ENSCAFGs_BM.has_key(enscafg):
-            ENSCAFGs_BM[enscafg] = {}
-            ENSCAFGs_BM[enscafg]['gene_name'] = gene_name
-            ENSCAFGs_BM[enscafg]['paralogy_type'] = []
-            ENSCAFGs_BM[enscafg]['paralogous_genes'] = []
-        ENSCAFGs_BM[enscafg]['paralogous_genes'].append(paralog)
-        ENSCAFGs_BM[enscafg]['paralogy_type'].append(paralogy_type)
+        enscafg = line.split('\t')[0]
+        if not ENSCAFGs[enscafg].has_key('paralogous_genes'):
+            ENSCAFGs[enscafg]['paralogous_genes'] = []
+            ENSCAFGs[enscafg]['paralogy_type'] = []
+        if (line.split('\t')[2]) and ((not ENSCAFGs[enscafg].has_key('paralogous_genes')) or (line.split('\t')[2] not in ENSCAFGs[enscafg]['paralogous_genes'])):
+            paralog = line.split('\t')[2]
+            paralogy_type = line.rstrip().split('\t')[3]
+            ENSCAFGs[enscafg]['paralogous_genes'].append(paralog)
+            ENSCAFGs[enscafg]['paralogy_type'].append(paralogy_type)
 
-#for i in ENSCAFGs_BM:
-#    print i,ENSCAFGs_BM[i]
+#for i in ENSCAFGs:
+    #print i,ENSCAFGs[i]
+
 
 # Indexing the cancer mutation list
 mutations = []
@@ -182,7 +147,6 @@ for line in input:
     else:
         warn = 'No_warning'
     # Chimeras with 2 unmatched features
-    RLOCs = chimID.split('---')
     if chimID == 'N/A---N/A':
         noFeat.append((chimClass,spR,spP,warn,chr1,end1,strand1,chr2,start2,strand2))
         continue
@@ -202,9 +166,6 @@ for line in input:
     if options.single_end == False:
         chim[chimID]['spP'] += int(spP)
     chim[chimID]['warnings'].append(warn)
-    #if not chim[chimID]['breakpoint'].has_key(chimClass):
-        #chim[chimID]['breakpoint'][chimClass] = []
-    #chim[chimID]['breakpoint'][chimClass].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
     chim[chimID]['breakpoint'].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
 
 input.close()
@@ -231,17 +192,18 @@ orderedChim = OrderedDict(sorted(chim.iteritems(), key = lambda x:x[1]['spR'], r
     #print i,orderedChim[i]
 
 for chim in orderedChim:
-    RLOCs = chim.split('---')
+    #RLOCs = chim.split('---')
+    feats = chim.split('---')
     # Writing the file for chimera with 2 matched features
-    if ('N/A' not in RLOCs) and (RLOCs[0] != RLOCs[1]):
+    if ('N/A' not in feats) and (feats[0] != feats[1]):
         write_res(twoFeat_file, 'Both')
         # Determining if the two features are considered paralogous
         paralogous = False
-        if RLOCs_index.has_key(RLOCs[0]) and RLOCs_index.has_key(RLOCs[1]):
-            for enscafg1 in RLOCs_index[RLOCs[0]]['enscafg']:
-                for enscafg2 in RLOCs_index[RLOCs[1]]['enscafg']:
-                    if ENSCAFGs_BM.has_key(enscafg1):
-                        if enscafg2 in ENSCAFGs_BM[enscafg1]['paralogous_genes']:
+        if RLOCs.has_key(feats[0]) and RLOCs.has_key(feats[1]):
+            for enscafg1 in RLOCs[feats[0]]['enscafgs']:
+                for enscafg2 in RLOCs[feats[1]]['enscafgs']:
+                    if ENSCAFGs.has_key(enscafg1):
+                        if enscafg2 in ENSCAFGs[enscafg1]['paralogous_genes']:
                             paralogous = True
                             break
                 if paralogous:
@@ -251,10 +213,10 @@ for chim in orderedChim:
         else:
             twoFeat_file.write('No_paralogy\n')
     # Writing the file for chimera with the same feature matched twice
-    elif RLOCs[0] == RLOCs[1]:
+    elif feats[0] == feats[1]:
         write_res(monoFeat_file, 'First')
     # Writing the files for chimera with only one matched feature
-    elif RLOCs[1] == 'N/A':
+    elif feats[1] == 'N/A':
         write_res(oneFeat_file, 'First')
     else:
         write_res(oneFeat_file, 'Second')
