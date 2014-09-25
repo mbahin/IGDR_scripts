@@ -89,7 +89,6 @@ def get_fasta(sense):
 
 # Setting the environment
 os.system('. /local/env/envsamtools.sh')
-#GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
 GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gff'
 
 # Getting options back
@@ -164,7 +163,7 @@ if not options.total:
 #####
 with open(GFF,'r') as GFF_file:
     for line in GFF_file:
-        if line.split('\t')[2] == 'gene':
+        if (not line.startswith('#')) and (line.split('\t')[2] == 'gene'):
             rloc = line.split('\t')[8].split(';')[0].split('=')[1]
             RLOCs[rloc]['chr'] = line.split('\t')[0]
             RLOCs[rloc]['start'] = line.split('\t')[3]
