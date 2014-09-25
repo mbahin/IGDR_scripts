@@ -7,6 +7,8 @@
 # Template command to launch the script
 #qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -g /home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3 -s pairs.sam -n LUPA13 -r
 
+source ~/.bash_profile
+
 # Config (Environments to source)
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
 
