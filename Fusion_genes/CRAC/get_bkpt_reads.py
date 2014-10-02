@@ -188,7 +188,8 @@ if options.feat2 and (options.feat2 not in feat_index):
 
 # Defining the RLOCs requested
 rloc1 = classics.get_RLOC_from_feat(options.feat1)
-rloc2 = classics.get_RLOC_from_feat(options.feat2)
+if options.feat2:
+    rloc2 = classics.get_RLOC_from_feat(options.feat2)
 
 # Getting the interval terminals
 if options.total:
@@ -220,20 +221,21 @@ else:
         else:
             feat1_beg = end1
             feat1_end = str(int(end1) + 1000 * options.nt)
-    if options.feat2 != 'No_match':
-        if strand2 == '1':
-            feat2_beg = start2
-            feat2_end = RLOCs[rloc2]['end']
+    if options.feat2:
+        if options.feat2 != 'No_match':
+            if strand2 == '1':
+                feat2_beg = start2
+                feat2_end = RLOCs[rloc2]['end']
+            else:
+                feat2_beg = RLOCs[rloc2]['start']
+                feat2_end = start2
         else:
-            feat2_beg = RLOCs[rloc2]['start']
-            feat2_end = start2
-    else:
-        if strand2 == '1':
-            feat2_beg = start2
-            feat2_end = str(int(start2) + 1000 * options.nt)
-        else:
-            feat2_beg = str(int(start2) - 1000 * options.nt)
-            feat2_end = start2
+            if strand2 == '1':
+                feat2_beg = start2
+                feat2_end = str(int(start2) + 1000 * options.nt)
+            else:
+                feat2_beg = str(int(start2) - 1000 * options.nt)
+                feat2_end = start2
 
 # Finding chromosomes if full feature mode chosen (no breakpoint provided)
 if options.total:
