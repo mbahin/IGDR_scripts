@@ -39,9 +39,8 @@ function launch {
 # Getting options back
 already_sorted=FALSE # TEMPORARY
 format_bam=FALSE
-order_pos=FALSE
+#order_pos=FALSE # TEMPORARY
 transcript_mode=FALSE
-#already_sorted=FALSE
 nonstranded=FALSE
 stranded_reverse=FALSE
 samout_option=FALSE
@@ -52,7 +51,7 @@ do
 		g) gtf=$OPTARG;;
 		a) already_sorted=TRUE;;
 		f) format_bam=TRUE;;
-		r) order_pos=TRUE;;
+		#r) order_pos=TRUE;; # TEMPORARY
 		t) transcript_mode=TRUE;;
 		n) nonstranded=TRUE;;
 		s) stranded_reverse=TRUE;;
