@@ -44,7 +44,7 @@ transcript_mode=FALSE
 nonstranded=FALSE
 stranded_reverse=FALSE
 samout_option=FALSE
-while getopts "i:g:afrtnso" OPTION
+while getopts "i:g:aftnso" OPTION
 do
 	case $OPTION in
 		i) input=$OPTARG;;
