@@ -1,10 +1,6 @@
 #! /bin/bash
 
-# Mathieu Bahin, 31/03/14 (2nd edition)
-# Last update: 31/03/14
-
-# Template command to launch the script in a loop
-#for i in $(ls <BAM files directory>/*.bam); do qsub <script> -b $i -g <file.gtf> -c -o -s; done
+# Mathieu Bahin, 31/03/14
 
 # Sourcing environment(s)
 . /local/env/envR-3.1.0.sh
@@ -13,6 +9,7 @@
 DESeq2_launch='/home/genouest/genouest/mbahin/DE/DESeq2_launch.r'
 edgeR_launch='/home/genouest/genouest/mbahin/DE/edgeR_launch.r'
 merge_analyses_script='/home/genouest/genouest/mbahin/DE/merge_analyses.py'
+create_Venn='/home/genouest/genouest/mbahin/DE/create_Venn.r'
 
 # Getting options back
 mode='de'
@@ -77,7 +74,6 @@ else
 	cd $directory
 	mkdir Counts
 	cp ${counts%/}/* Counts/
-	#cp $counts Counts/
 	cp $factors conditions.csv
 fi
 
@@ -162,10 +158,9 @@ fi
 if [[ ${#mode} == 2 ]]; then
     echo "===== Intersecting DESeq2 and edgeR analysis results..."
 	python $merge_analyses_script -t $threshold -d $DESeq2_mode/file.output.csv -e $edgeR_mode/file.output.csv
-	#./$merge_analyses_script -t $threshold -d $DESeq2_mode/file.output.csv -e $edgeR_mode/file.output.csv
 
     # Creating a Venn diagram
-    Rscript /home/genouest/genouest/mbahin/DE/create_Venn.r
+    Rscript $create_Venn
 fi
 echo "Done."
 
