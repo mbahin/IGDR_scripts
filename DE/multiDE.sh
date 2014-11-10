@@ -13,7 +13,7 @@ create_Venn='/home/genouest/genouest/mbahin/DE/create_Venn.r'
 
 # Getting options back
 mode='de'
-directory='MultiDE'
+directory='multiDE'
 paired_design=FALSE
 glm=FALSE
 htsfilter=FALSE
