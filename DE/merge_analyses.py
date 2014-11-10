@@ -17,7 +17,7 @@ options = parser.parse_args()
 
 # Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
 sys.path.insert(1, '/home/genouest/genouest/mbahin/Scripts')
-import classics, get_indexes
+import get_indexes
 RLOCs = get_indexes.RLOCs
 ENSCAFGs = get_indexes.ENSCAFGs
 sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
@@ -29,35 +29,33 @@ with open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r
         cancer_mutations.append(line.split('\t')[0])
 
 # Indexing the DESeq2 results
-DESeq2_file = open(options.DESeq2_file,'r')
 results = {}
-DESeq2_file.readline()
-for line in DESeq2_file:
-    xloc = line.split(',')[0].split('"')[1]
-    if not results.has_key(xloc):
-        results[xloc] = {}
-    results[xloc]['DESeq2_score'] = line.rstrip().split(',')[-1]
-    if line.split(',')[2] == 'NA':
-        results[xloc]['DESeq2_fc'] = 'NA'
-    elif float(line.split(',')[2]) >= 0:
-        results[xloc]['DESeq2_fc'] = 'up'
-    else:
-        results[xloc]['DESeq2_fc'] = 'down'
-DESeq2_file.close()
+with open(options.DESeq2_file,'r') as DESeq2_file:
+    DESeq2_file.readline()
+    for line in DESeq2_file:
+        xloc = line.split(',')[0].split('"')[1]
+        if not results.has_key(xloc):
+            results[xloc] = {}
+        results[xloc]['DESeq2_score'] = line.rstrip().split(',')[-1]
+        if line.split(',')[2] == 'NA':
+            results[xloc]['DESeq2_fc'] = 'NA'
+        elif float(line.split(',')[2]) >= 0:
+            results[xloc]['DESeq2_fc'] = 'up'
+        else:
+            results[xloc]['DESeq2_fc'] = 'down'
 
 # Indexing the edgeR results
-edgeR_file = open(options.edgeR_file,'r')
-edgeR_file.readline()
-for line in edgeR_file:
-    xloc = line.split(',')[0].split('"')[1]
-    if not results.has_key(xloc):
-        results[xloc] = {}
-    results[xloc]['edgeR_score'] = line.rstrip().split(',')[-1]
-    if float(line.split(',')[1]) >= 0:
-        results[xloc]['edgeR_fc'] = 'up'
-    else:
-        results[xloc]['edgeR_fc'] = 'down'
-edgeR_file.close()
+with open(options.edgeR_file,'r') as edgeR_file:
+    edgeR_file.readline()
+    for line in edgeR_file:
+        xloc = line.split(',')[0].split('"')[1]
+        if not results.has_key(xloc):
+            results[xloc] = {}
+        results[xloc]['edgeR_score'] = line.rstrip().split(',')[-1]
+        if float(line.split(',')[1]) >= 0:
+            results[xloc]['edgeR_fc'] = 'up'
+        else:
+            results[xloc]['edgeR_fc'] = 'down'
 
 # Producing the scores and venn files
 scores_file = open('file.scores.csv','w')
@@ -75,12 +73,10 @@ protein_coding = 0
 lncRNA = 0
 other = 0
 cancer_known_nb = 0
-#biotypes
 
 for xloc in results:
     scores_file.write(xloc)
     venn_file.write(xloc)
-    #if results[xloc].has_key('DESeq2_score') and (results[xloc]['DESeq2_score'] != 'NA') and (results[xloc]['DESeq2_fc'] != 'NA'):
     if results[xloc].has_key('DESeq2_score') and (results[xloc]['DESeq2_score'] != 'NA'):
         scores_file.write(','+results[xloc]['DESeq2_score'])
         venn_file.write(','+str(int(float(results[xloc]['DESeq2_score']) <= threshold)))
@@ -95,10 +91,8 @@ for xloc in results:
             DE_genes += 1
 
             # Determining if the gene is in the candidates list
-            #if RLOCs_index.has_key(xloc):
             if RLOCs.has_key(xloc):
                 cancer_known = False
-                #for enscafg in RLOCs_index[xloc]['enscafgs']:
                 for enscafg in RLOCs[xloc]['enscafgs']:
                     if enscafg in cancer_mutations:
                         cancer_known = True
@@ -161,5 +155,6 @@ else:
         stat_file.write('\t\tAmbiguous / Other: '+str(other)+'\n')
         stat_file.write('\tGene(s) known to be involved in cancer mutations: '+str(cancer_known_nb)+' / '+str(len(cancer_mutations))+'\n')
 
+	# Copying stats to the standard output
     with open ('file.statistics.txt','r') as stat_file:
         shutil.copyfileobj(stat_file, sys.stdout)
