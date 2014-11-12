@@ -4,18 +4,18 @@ suppressPackageStartupMessages(library("DESeq2"))
 
 # Getting parameters back
 args <- commandArgs(trailingOnly = TRUE)
-htsfilter <- (args[1] == TRUE)
-paired <- (args[2] == TRUE)
+directory <- args[1]
+htsfilter <- (args[2] == TRUE)
+paired <- (args[3] == TRUE)
 
 # Finding the data files in the directory
 print("Loading count data...")
-directory <- '../Counts/'
-sampleFiles <- list.files(path=directory)
+sampleFiles <- as.character(read.csv('../metadata.csv',header=T)[,1])
 
 # Finding the factors from the file 'conditions.csv' in the directory
-sampleCondition <- as.character(read.csv('../conditions.csv',header=FALSE)$V1)
+sampleCondition <- as.character(read.csv('../metadata.csv',header=TRUE)$condition)
 if (paired) {
-	samplePatient <- as.character(read.csv('../conditions.csv',header=FALSE)$V2)
+	samplePatient <- as.character(read.csv('../metadata.csv',header=T)$patient)
 }
 
 # Creating a data frame linking the count files and the fatcors
@@ -24,7 +24,6 @@ if (paired) {
 } else {
 	sampleTable <- data.frame(sampleName = sampleFiles, fileName = sampleFiles, condition = sampleCondition)
 }
-
 # Loading count data from HTSeq-count
 if (paired) {
 	ddsHTSeq <- DESeqDataSetFromHTSeqCount(sampleTable = sampleTable, directory = directory, design= ~ patient + condition)

@@ -4,16 +4,17 @@ suppressPackageStartupMessages(library(edgeR))
 
 # Getting parameters back
 args <- commandArgs(trailingOnly = TRUE)
-htsfilter <- (args[1] == TRUE)
-glm <- (args[2] == TRUE)
-paired <- (args[3] == TRUE)
+directory <- args[1]
+htsfilter <- (args[2] == TRUE)
+glm <- (args[3] == TRUE)
+paired <- (args[4] == TRUE)
 
 # Finding the data files in the directory
-sampleFiles <- list.files(path='../Counts/')
-counts <- readDGE(sampleFiles,path='../Counts/',header=F)
+sampleFiles <- as.character(read.csv('../metadata.csv',header=TRUE)[,1])
+counts <- readDGE(sampleFiles,path=directory,header=F)
 
 # Finding the conditions from the file 'conditions.csv' in the directory
-sampleCondition <- as.character(read.csv('../conditions.csv',header=FALSE)$V1)
+sampleCondition <- as.character(read.csv('../metadata.csv',header=T)$condition)
 
 # Creating a DGEList
 y <- DGEList(counts=counts,group=sampleCondition)
@@ -52,7 +53,7 @@ if (!glm) {
 	if (!paired) {
 		design <- model.matrix(~sampleCondition)
 	} else {
-		samplePatient <- as.character(read.csv('../conditions.csv',header=FALSE)$V2)
+		samplePatient <- as.character(read.csv('../metadata.csv',header=T)$patient)
 		design <- model.matrix(~samplePatient+sampleCondition)
 		}
 
