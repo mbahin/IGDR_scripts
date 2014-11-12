@@ -3,10 +3,7 @@
 # Mathieu Bahin, 04/04/14
 # Last update: 15/09/14
 
-import os, argparse, shutil, sys
-
-# Setting the environment
-os.system('. /local/env/envpython-2.7.sh')
+import argparse, shutil, sys
 
 # Getting options back
 parser = argparse.ArgumentParser()
