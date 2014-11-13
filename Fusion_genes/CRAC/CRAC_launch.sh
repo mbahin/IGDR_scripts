@@ -49,6 +49,10 @@ do
 done
 
 # Checking parameters
+if [[ ! ("$reads1" =~ ^/) || ((-n "$reads2") && ! ("$reads2" =~ ^/)) ]]; then
+	echo "The FASTQ input file(s) (options '-r' and '-s') must be specified with an absolute path. Aborting."
+	exit 1
+fi
 #if [[ "$paired_end" == FALSE && -n $reads2 ]]; then
 #	echo "Single-end mode chosen (option '-e') but second read file given (option '-s'). Aborting."
 #	exit 1
@@ -80,10 +84,6 @@ fi
 log=file.log
 echo -e "Date: "$(date)"\n" > file.log
 echo -e "Index:\n$index" >> file.log
-#if [[ "$paired_end" == TRUE ]]; then
-#	echo -e "\nRead file (R1):\n$reads1\n" >> file.log
-#	echo -e "Read file (R2):\n$reads2" >> file.log
-#fi
 echo -e "\nRead file (R1):\n$reads1" >> file.log
 if [[ -n "$reads2" ]]; then
 	echo -e "Read file (R2):\n$reads2" >> file.log
@@ -114,10 +114,13 @@ if [[ -n "$threads" ]]; then
 fi
 command=$command" -o- --summary summary.output"
 echo -e "\nOriginal command line:\n$command" >> file.log
-$command | samtools view -Sbh -  > $output
+$command | samtools view -Sbh - > $output
 
 # Creating the sorted BAM and index file with only the primary alignments (used by the script to get the paired-end reads around a breakpoint)
-samtools view -hb -F 0x800 $output > pairs.primary_alignment.bam
+#samtools view -hb -F 0x800 $output > pairs.primary_alignment.bam
+#samtools view -hb -F 0x100 $output > pairs.primary_alignment.bam
+samtools view -hb $output > pairs.primary_alignment.bam
+#samtools view -hb -F 0x800 -F 0x100 $output > pairs.primary_alignment.bam
 samtools sort -o pairs.primary_alignment.bam sorting > pairs.primary_alignment.sort.bam
 rm pairs.primary_alignment.bam
 samtools index pairs.primary_alignment.sort.bam
