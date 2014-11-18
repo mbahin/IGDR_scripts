@@ -13,9 +13,13 @@
 #   - a nucleotidic distance (option '-n')
 #   - a flag for full feature mode (option '-t')
 # If the mode 'full feature' is chosen, then all the paired-end reads with one mate on the first feature and the second mate on the second feature are retrieved. Otherwise, only the paired-end reads with one mate around the breakpoint are retrieved. If a feature is unknown, then, a kpb distance should be provided to search around the breakpoint.
-# The output are:
-#   - spanning_split_reads.fasta: a fasta file with the split reads (if 'full feature' mode is not chosen)
-#   - spanning_PE_reads.fasta: a fasta file with the paired-end reads around the breakpoint or the paired-end reads for the 2 features (if 'full feature' mode is chosen)
+# The outputs are:
+#   - 'spanning_split_reads.fasta': a fasta file with the split reads (if 'full feature' mode is not chosen)
+#   - 'spanning_PE_reads.fasta': a fasta file with the paired-end reads around the breakpoint or the paired-end reads for the 2 features (if 'full feature' mode is chosen)
+#   - 'Contigs' (directory):
+#      - 'file.log': the log file from CAP3
+#      - 'PE_contigs.fasta': a fasta file with the contigs created by CAP3 from 'spanning_PE_reads.fasta' sequences
+#      - 'PE_singlets.fasta': a fasta file with the sequences from 'spanning_PE_reads.fasta' that have not been contiged
 
 import os, argparse, sys, re, shutil
 
@@ -261,6 +265,7 @@ spanning_PE_output = open('spanning_PE_reads.fasta','w')
 shutil.copyfileobj(open('output.fasta','r'), spanning_PE_output)
 if options.feat2:
     shutil.copyfileobj(open('output.rev.fasta','r'), spanning_PE_output)
+    ### TO MODIFY AND TEST add line 272 here ###
 spanning_PE_output.close()
 os.remove('output.fasta')
 if options.feat2:
