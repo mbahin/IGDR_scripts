@@ -176,19 +176,6 @@ with open(GFF,'r') as GFF_file:
 #####
 # Getting the paired-end reads around the breakpoint
 #####
-"""
-# Checking the features
-if options.feat1 not in feat_index:
-    print 'Warning: the first feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
-    os.chdir('..')
-    shutil.rmtree(dir_name)
-    sys.exit()
-if options.feat2 and (options.feat2 not in feat_index):
-    print 'Warning: the second feature you provided is a problem for now.\nSorry :). Aborting.\n#####'
-    os.chdir('..')
-    shutil.rmtree(dir_name)
-    sys.exit()
-"""
 
 # Defining the RLOCs requested
 rloc1 = classics.get_RLOC_from_feat(options.feat1)
