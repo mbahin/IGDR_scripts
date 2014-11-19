@@ -261,15 +261,12 @@ else:
     get_fasta(True)
 
 # Merging the sense and reverse fasta files
-spanning_PE_output = open('spanning_PE_reads.fasta','w')
-shutil.copyfileobj(open('output.fasta','r'), spanning_PE_output)
-if options.feat2:
-    shutil.copyfileobj(open('output.rev.fasta','r'), spanning_PE_output)
-    ### TO MODIFY AND TEST add line 272 here ###
-spanning_PE_output.close()
-os.remove('output.fasta')
-if options.feat2:
-    os.remove('output.rev.fasta')
+with open('spanning_PE_reads.fasta','w') as spanning_PE_output:
+    shutil.copyfileobj(open('output.fasta','r'), spanning_PE_output)
+    os.remove('output.fasta')
+    if options.feat2:
+        shutil.copyfileobj(open('output.rev.fasta','r'), spanning_PE_output)
+        os.remove('output.rev.fasta')
 
 #####
 # Making the contigs with CAP3
