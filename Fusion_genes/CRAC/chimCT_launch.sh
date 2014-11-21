@@ -7,10 +7,9 @@
 # Template command to launch the script
 #qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -g /home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3 -s pairs.sam -n LUPA13 -r
 
-source ~/.bash_profile
-
 # Config (Environments to source)
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
+source ~/.bash_profile
 
 # Getting options back
 stranded=FALSE
@@ -20,7 +19,6 @@ conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
 while getopts "g:s:n:tkrc:" OPTION
 do
 	case $OPTION in
-    	#d) directory=$OPTARG;;
     	g) gff=$OPTARG;;
     	s) sam=$OPTARG;;
     	n) sample_name=$OPTARG;;
@@ -60,4 +58,6 @@ if [[ "$keep_ig" == TRUE ]]; then
 fi
 
 # Executing command
-$command > file.chim.txt 2> stderr.log
+$command > ${sample_name}.chimCT.txt
+# To get the standard error output to debug
+#$command > ${sample_name}.chimCT.txt 2> stderr.log
