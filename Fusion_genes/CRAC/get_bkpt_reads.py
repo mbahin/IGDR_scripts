@@ -21,7 +21,7 @@
 #      - 'PE_contigs.fasta': a fasta file with the contigs created by CAP3 from 'spanning_PE_reads.fasta' sequences
 #      - 'PE_singlets.fasta': a fasta file with the sequences from 'spanning_PE_reads.fasta' that have not been contiged
 
-import os, argparse, sys, re, shutil
+import os, argparse, sys, re, shutil, glob
 
 # Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
 sys.path.insert(1, '/home/genouest/genouest/mbahin/Scripts')
@@ -142,7 +142,7 @@ if not options.total:
 #####
 
     # Building the spanning read file
-    fasta_file = open(options.processed_dir+'/link_to_spanning_split_reads.ln.fasta','r')
+    fasta_file = open(glob.glob(options.processed_dir+'/*.fa')[0],'r')
     spanning_split_output = open ('spanning_split_reads.fasta','w')
     to_keep = False
     seq_nb = 1
