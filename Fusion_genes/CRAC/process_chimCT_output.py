@@ -6,7 +6,7 @@
 # The input is the directory where the results of chimCT were stored and the sample name.
 # Outputs are the 4 file describing the chimeras and the spanning reads fasta file.
 
-import argparse, sys, shutil, re, os
+import argparse, sys, shutil, re, os, glob
 from collections import OrderedDict
 
 # Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
@@ -32,7 +32,7 @@ if (not options.input.startswith('/')) or (not options.crac_dir.startswith('/'))
     sys.exit()
 
 if not os.path.isdir(options.input):
-    print "The parameter '-d', "+options.input+" is not a directory. Aborting."
+    print "The parameter '-i', "+options.input+" is not a directory. Aborting."
     sys.exit()
 
 # Creating the directory to store result files
@@ -125,7 +125,7 @@ with open('/home/genouest/genouest/mbahin/Annotations/translocation_gene_list.tx
         translocations.append(line.split('\t')[0])
 
 # Processing chimCT output
-input = open(options.input+'/file.chim.txt','r')
+input = open(glob.glob(options.input+'/*.chimCT.txt')[0],'r')
 chim = {}
 noFeat = []
 for line in input:
