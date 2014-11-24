@@ -1,6 +1,6 @@
 # Cutomizing the prompt
 #export PS1="\[\e[1;49;34m\][\u@\h \W $(date +%H:%M)]\$ \[\e[m\]" # With user
-export PS1="\e[1;34m[\h \e[1;32m\W\e[m \e[1;34m\A]\$ \e[m"
+export PS1="\[\e[1;34m[\h\e[m \e[1;32m\W\e[m \e[1;34m\A]$\e[m\] " # '\[' avoids the line wrapping problem when commands with more than one line.
 
 # Aliases
 alias ll="ls -lhG --color"
@@ -25,20 +25,15 @@ alias chimCT="$HOME/Fusion_genes/CRAC/chimCT/bin/chimCT"
 
 # Path aliases
 export DOG='/home/genouest/umr6061/recomgen/dog/mbahin'
-export DATA='/home/genouest/umr6061/recomgen/dog/data/canFam3/'
+export DATA='/home/genouest/umr6061/recomgen/dog/data/canFam3/NGS/'
 export RLOCs='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/RLOCs_index.txt'
 export ENSCAFGs='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspondence_Indexes/ENSCAFGs_index.txt'
 export GTFv2='/home/SAVE-OMAHA/tderrien/DATA/canFam3/annotation/MERGED_BROAD_RENNES_v2/merged_asm/merged.withStrand.gtf'
-#export GTFv3='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gtf'
 export GTFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gtf'
-#export GFFv3='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3'
-#export GFFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-23-2014.gff3'
 export GFFv3='/home/genouest/umr6061/recomgen/tderrien/dogomaha/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.06-02-2014.gff3'
 export GTFv3_1='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gtf'
 export GFFv3_1='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gff'
-#export GTFv3_2='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf'
 export GTFv3_2='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gtf'
-#export GFFv3_2='/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
 export GFFv3_2='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.09-02-2014.gff'
 export GTF='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf'
 export GFF='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gff'
@@ -51,12 +46,17 @@ export GFF='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAn
 . /local/env/envgit-1.7.5.sh
 . /local/env/envcrac-1.5.0.sh
 . /local/env/envbedtools-2.19.0.sh
+#. /local/env/envbowtie-2.2.3.sh
+. /local/env/envbowtie-1.0.0.sh
+. /local/env/envblat.sh
+. /local/env/envgmap.sh
 
 # Perl Lib directory
 PERL5LIB=$HOME/perl
-PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5/
-PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/bin/perl/lib/
+PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5
+PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/bin/perl/lib
 PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/src/bioperl-1.2.3
+PERL5LIB=${PERL5LIB}:/home/genouest/genouest/mbahin/Fusion_genes/defuse-0.6.2/scripts
 export PERL5LIB
 
 # Export lang
