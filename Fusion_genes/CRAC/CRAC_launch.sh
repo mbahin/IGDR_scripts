@@ -50,19 +50,23 @@ if [[ ! ("$reads1" =~ ^/) || ((-n "$reads2") && ! ("$reads2" =~ ^/)) ]]; then
 	exit 1
 fi
 
-# Creating a directory for the job
+# Creating a directory for the job (from the first reads file and chopping some extensions)
+rep=$(basename $reads1 '.fastq.gz')
+rep=${rep%.trim}
+rep=${rep%_R1}
 if [[ "$stringent_chimera" == TRUE && "$noAmbiguity" == TRUE ]]; then
-	rep=$(basename $reads1 '_R1.trim.fastq.gz')_stringent_noAmbig_CRAC
+	rep=${rep}_stringent_noAmbig_CRAC
 elif [[ "$stringent_chimera" == TRUE ]]; then
-	rep=$(basename $reads1 '_R1.trim.fastq.gz')_stringent_CRAC
+	rep=${rep}_stringent_CRAC
 elif [[ "$noAmbiguity" == TRUE ]]; then
-	rep=$(basename $reads1 '_R1.trim.fastq.gz')_noAmbig_CRAC
+	rep=${rep}_noAmbig_CRAC
 else
-	rep=$(basename $reads1 '_R1.trim.fastq.gz')_CRAC
+	rep=${rep}_CRAC
 fi
 if [[ ! -d "$rep.dir" ]]; then
 	mkdir $rep.dir
 	cd $rep.dir
+	exit 1
 else
 	echo "Directory $rep already exists. Aborting."
 	exit 1
