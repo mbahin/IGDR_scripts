@@ -14,9 +14,8 @@ source ~/.bash_profile
 # Getting options back
 stranded=FALSE
 keep_ig=FALSE
-spanning_reads=FALSE
 conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
-while getopts "g:s:n:tkrc:" OPTION
+while getopts "g:s:n:tkc:" OPTION
 do
 	case $OPTION in
     	g) gff=$OPTARG;;
@@ -24,7 +23,6 @@ do
     	n) sample_name=$OPTARG;;
     	t) stranded=TRUE;;
     	k) keep_ig=TRUE;;
-    	r) spanning_reads=TRUE;;
     	c) conf=$OPTARG;;
     esac
 done
@@ -48,11 +46,8 @@ else
 fi
 
 # Command building
-command="$chimCT -s $sam -n $sample_name --summary summary.txt --conf $conf"
+command="$chimCT -s $sam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
 
-if [[ "$spanning_reads" == TRUE ]]; then
-	command=$command' --spanning-reads '$sample_name
-fi
 if [[ "$keep_ig" == TRUE ]]; then
 	command=$command' --keep-ig'
 fi
