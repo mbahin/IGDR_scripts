@@ -5,7 +5,7 @@
 # Mathieu Bahin, 15/04/14
 
 # Template command to launch the script
-#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -g /home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3 -s pairs.sam -n LUPA13 -r
+#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -g /home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3 -i pairs.bam -n LUPA13 -r
 
 # Config (Environments to source)
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
@@ -15,11 +15,11 @@ source ~/.bash_profile
 stranded=FALSE
 keep_ig=FALSE
 conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
-while getopts "g:s:n:tkc:" OPTION
+while getopts "g:i:n:tkc:" OPTION
 do
 	case $OPTION in
     	g) gff=$OPTARG;;
-    	s) sam=$OPTARG;;
+    	i) input=$OPTARG;;
     	n) sample_name=$OPTARG;;
     	t) stranded=TRUE;;
     	k) keep_ig=TRUE;;
@@ -28,12 +28,12 @@ do
 done
 
 # Checking parameters
-if [[ -z $sam || -z $sample_name ]]; then
-	echo "SAM file (option '-s') and sample name (option '-n') are mandatory. Please provide them. Aborting."
+if [[ -z $input || -z $sample_name ]]; then
+	echo "Input BAM/SAM file (option '-i') and sample name (option '-n') are mandatory. Please provide them. Aborting."
 	exit 1
 fi
-if [[ ! ("$sam" =~ ^/) ]]; then
-	echo "The input SAM file path must be absolute. Aborting."
+if [[ ! ("$input" =~ ^/) ]]; then
+	echo "The input BAM/SAM file path must be absolute. Aborting."
 	exit 1
 fi
 directory=${sample_name}_chimCT.dir
@@ -46,7 +46,7 @@ else
 fi
 
 # Command building
-command="$chimCT -s $sam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
+command="$chimCT -s $input -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
 
 if [[ "$keep_ig" == TRUE ]]; then
 	command=$command' --keep-ig'
