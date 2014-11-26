@@ -171,7 +171,7 @@ if [[ ${#mode} == 2 ]]; then
 	/local/python/2.7/bin/python $merge_analyses_script -t $threshold -d $DESeq2_mode/file.DESeq2.output.csv -e $edgeR_mode/file.edgeR.output.csv
 
 	# Creating a Venn diagram
-	Rscript $create_Venn 'file.venn.csv'
+	Rscript $create_Venn 'file.venn.csv' 'vennDiag.png'
 fi
 echo "Done."
 
