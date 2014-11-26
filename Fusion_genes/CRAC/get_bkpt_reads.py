@@ -42,21 +42,16 @@ def get_fasta(sense):
     if options.feat2:
          # Getting first mates in the first area of interest
         if sense:
-            #os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
             os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.clean.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
         else:
-            #os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
             os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.clean.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.first_mates.bam')
 
         # Getting second mates in the second area of interest
         if sense:
-            #os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
             os.system('samtools view -b -f 0x80 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.clean.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
         else:
-            #os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
             os.system('samtools view -b -f 0x40 '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.clean.sort.bam '+chr2+':'+feat2_beg+'-'+feat2_end+' > file.second_mates.bam')
     else:
-        #os.system('samtools view '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.primary_alignment.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.merged_mates.sam')
         os.system('samtools view '+options.processed_dir+'/link_to_BAM_files_directory.ln/pairs.clean.sort.bam '+chr1+':'+feat1_beg+'-'+feat1_end+' > file.merged_mates.sam')
 
     # Getting paired-end reads with the two mates in the two area of interest
