@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#$ -q sgi144g.q
+#$ -q sgi512g.q
 #$ -M mbahin@univ-rennes1.fr
 #$ -m bea
 #$ -cwd
@@ -11,35 +11,31 @@
 # Script to launch CRAC.
 
 # Template command to launch the script
-# Paired:
-# qsub ~/Fusion_genes/CRAC/CRAC_script.sh -r /home/SAVE-OMAHA/JurasHic/FASTQ.dir/LUPA.dir/LUPA.trim_paired.dir/LUPA13_R1.paired.trim.fastq.gz -s /home/SAVE-OMAHA/JurasHic/FASTQ.dir/LUPA.dir/LUPA.trim_paired.dir/LUPA13_R2.paired.trim.fastq.gz -t 5
+# qsub ~/Fusion_genes/CRAC/CRAC_launch.sh -r $(pwd)/GIGA-HYS-2012_T01_ROTW_R1.trim.fastq.gz -s $(pwd)/GIGA-HYS-2012_T01_ROTW_R2.trim.fastq.gz -t 5
 # To work on multi-threads
 # -pe mpichtc 5
+# -pe make 5
+# -q sgi144g.q
 
 # Sourcing python environment
 . /local/env/envcrac-1.5.0.sh
 . /local/env/envsamtools.sh
 
 # Getting options back
-#directory='CRAC_results'
 index=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/Index/dogIndex
 kmer=22
-#paired_end=TRUE
 output=pairs.bam
 stringent_chimera=FALSE
 noAmbiguity=FALSE
 stranded=FALSE;
 detailed_sam=FALSE
-#while getopts "c:i:k:r:s:po:uvdt:" OPTION
 while getopts "i:k:r:s:unvdt:" OPTION
 do
 	case $OPTION in
-		#d) directory=$OPTARG;;
         i) index=$OPTARG;;
         k) kmer=$OPTARG;;
         r) reads1=$OPTARG;;
         s) reads2=$OPTARG;;
-        #p) paired_end=FALSE;;
         u) stringent_chimera=TRUE;;
         n) noAmbiguity=TRUE;;
         v) stranded=TRUE;;
@@ -53,14 +49,6 @@ if [[ ! ("$reads1" =~ ^/) || ((-n "$reads2") && ! ("$reads2" =~ ^/)) ]]; then
 	echo "The FASTQ input file(s) (options '-r' and '-s') must be specified with an absolute path. Aborting."
 	exit 1
 fi
-#if [[ "$paired_end" == FALSE && -n $reads2 ]]; then
-#	echo "Single-end mode chosen (option '-e') but second read file given (option '-s'). Aborting."
-#	exit 1
-#fi
-#if [[ "$paired_end" == TRUE && ( -z $reads1 || -z $reads2 ) ]]; then
-#	echo "Paired-end mode chosen (option '-e') but first or second read file missing. Aborting."
-#	exit 1
-#fi
 
 # Creating a directory for the job
 if [[ "$stringent_chimera" == TRUE && "$noAmbiguity" == TRUE ]]; then
@@ -116,11 +104,8 @@ command=$command" -o- --summary summary.output"
 echo -e "\nOriginal command line:\n$command" >> file.log
 $command | samtools view -Sbh - > $output
 
-# Creating the sorted BAM and index file with only the primary alignments (used by the script to get the paired-end reads around a breakpoint)
-#samtools view -hb -F 0x800 $output > pairs.primary_alignment.bam
-#samtools view -hb -F 0x100 $output > pairs.primary_alignment.bam
-samtools view -hb $output > pairs.primary_alignment.bam
-#samtools view -hb -F 0x800 -F 0x100 $output > pairs.primary_alignment.bam
-samtools sort -o pairs.primary_alignment.bam sorting > pairs.primary_alignment.sort.bam
-rm pairs.primary_alignment.bam
-samtools index pairs.primary_alignment.sort.bam
+# Creating the sorted BAM and index file without secondary and supplementary alignments (used by the script to get the paired-end reads around a breakpoint)
+samtools view -hb -F 0x800 -F 0x100 $output > pairs.clean.bam
+samtools sort -o pairs.clean.bam sorting > pairs.clean.sort.bam
+rm pairs.clean.bam
+samtools index pairs.clean.sort.bam
