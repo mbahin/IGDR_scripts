@@ -5,11 +5,13 @@
 # Mathieu Bahin, 15/04/14
 
 # Template command to launch the script
-#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -g /home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.05-06-2014.gff3 -i pairs.bam -n LUPA13 -r
+#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -i pairs.bam -n LUPA13 -r
 
-# Config (Environments to source)
+# Configuring the environment
+. /local/env/envsamtools.sh
+PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5
+export PERL5LIB
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
-source ~/.bash_profile
 
 # Getting options back
 stranded=FALSE
@@ -54,4 +56,4 @@ fi
 
 # Executing command
 $command > ${sample_name}.chimCT.txt
-# To get the standard error output to debug: $command > ${sample_name}.chimCT.txt 2> stderr.log
+# To get the standard error output (processing steps) to debug: $command > ${sample_name}.chimCT.txt 2> stderr.log
