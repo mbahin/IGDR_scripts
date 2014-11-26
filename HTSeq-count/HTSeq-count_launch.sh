@@ -1,5 +1,5 @@
-#$ -M mbahin@univ-rennes1.fr
-#$ -m bea
+# -M mbahin@univ-rennes1.fr
+# -m bea
 #$ -cwd
 
 # Template command to launch the script
@@ -49,7 +49,7 @@ do
 	case $OPTION in
 		i) input=$OPTARG;;
 		g) gtf=$OPTARG;;
-		a) already_sorted=TRUE;;
+		a) already_sorted=TRUE;;	
 		f) format_bam=TRUE;;
 		#r) order_pos=TRUE;; # TEMPORARY
 		t) transcript_mode=TRUE;;
