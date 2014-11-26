@@ -54,5 +54,4 @@ fi
 
 # Executing command
 $command > ${sample_name}.chimCT.txt
-# To get the standard error output to debug
-#$command > ${sample_name}.chimCT.txt 2> stderr.log
+# To get the standard error output to debug: $command > ${sample_name}.chimCT.txt 2> stderr.log
