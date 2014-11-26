@@ -118,13 +118,17 @@ done
 
 # Modifying count filenames
 for filename in $(ls); do
-	mv $filename ${filename#$prefix}
-	sed -i "s/$filename/${filename#$prefix}/g" ../metadata.csv
+	if [[ $filename != ${filename#$prefix} ]]; then
+		mv $filename ${filename#$prefix}
+		sed -i "s/$filename/${filename#$prefix}/g" ../metadata.csv
+	fi
 done
 
 for filename in $(ls); do
-	mv $filename ${filename%$suffix}
-	sed -i "s/$filename/${filename%$suffix}/g" ../metadata.csv
+	if [[ $filename != ${filename#$suffix} ]]; then
+		mv $filename ${filename%$suffix}
+		sed -i "s/$filename/${filename%$suffix}/g" ../metadata.csv
+	fi
 done
 cd ..
 
@@ -164,7 +168,7 @@ fi
 # Intersecting the results if both DESeq2 and edgeR analyses are requested
 if [[ ${#mode} == 2 ]]; then
 	echo "===== Intersecting DESeq2 and edgeR analysis results..."
-	/local/python/2.7/bin/python $merge_analyses_script -t $threshold -d $DESeq2_mode/file.output.csv -e $edgeR_mode/file.output.csv
+	/local/python/2.7/bin/python $merge_analyses_script -t $threshold -d $DESeq2_mode/file.DESeq2.output.csv -e $edgeR_mode/file.edgeR.output.csv
 
 	# Creating a Venn diagram
 	Rscript $create_Venn
