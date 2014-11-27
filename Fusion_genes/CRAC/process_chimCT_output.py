@@ -3,8 +3,8 @@
 # Mathieu Bahin, 21/05/14
 
 # Script to process chimCT output. The chimeras are split into 4 categories according to the number of part matching a known feature: 2 different, twice the same, only one, zero. Information are provided about the chimeras and the features matched.
-# The input is the directory where the results of chimCT were stored and the sample name.
-# Outputs are the 4 file describing the chimeras and the spanning reads fasta file.
+# The input is the sample name and the CRAC output directory.
+# Outputs are the 4 file describing the chimeras a link to the spanning reads fasta file and another link to the CRAC output directory.
 
 import argparse, sys, shutil, re, os, glob, stat
 from collections import OrderedDict
@@ -18,22 +18,11 @@ sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
 
 # Getting options back
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', dest='input')
 parser.add_argument('-n', dest='sample_name')
 parser.add_argument('-c', dest='crac_dir')
 parser.add_argument('-s', dest='single_end', action='store_true')
 options = parser.parse_args()
-options.input = options.input.rstrip('/')
 options.crac_dir = options.crac_dir.rstrip('/')
-
-# Checking the parameters
-if (not options.input.startswith('/')) or (not options.crac_dir.startswith('/')):
-    print 'The directories specified must be absolute pathes. Aborting.'
-    sys.exit()
-
-if not os.path.isdir(options.input):
-    print "The parameter '-i', "+options.input+" is not a directory. Aborting."
-    sys.exit()
 
 # Creating the directory to store result files
 dir_name = options.sample_name+'_processed.dir'
@@ -108,10 +97,6 @@ with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspon
             ENSCAFGs[enscafg]['paralogous_genes'].append(paralog)
             ENSCAFGs[enscafg]['paralogy_type'].append(paralogy_type)
 
-#for i in ENSCAFGs:
-    #print i,ENSCAFGs[i]
-
-
 # Indexing the cancer mutation list
 mutations = []
 with open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r') as mutation_file:
@@ -125,50 +110,48 @@ with open('/home/genouest/genouest/mbahin/Annotations/translocation_gene_list.tx
         translocations.append(line.split('\t')[0])
 
 # Processing chimCT output
-input = open(glob.glob(options.input+'/*.chimCT.txt')[0],'r')
 chim = {}
 noFeat = []
-for line in input:
-    if line.startswith('#'):
-        continue
-    # Catching line information
-    (chimID,chr1,end1,strand1,chr2,start2,strand2) = (line.split('\t')[1:8])
-    (chimClass,warnings) = (line.split('\t')[11:13])
-    spR = re.match(r'Nb_spanning_reads=(.*)',line.split('\t')[21]).group(1)
-    if options.single_end == False:
-        spP = re.match(r'Nb_spanning_PE=(.*)',line.rstrip().split('\t')[22]).group(1)
-    else:
-        spP = 'NA'
-    if chimClass == '4':
-        continue
-    match = re.match(r'FusionDistance=([^,]*)',warnings)
-    if match:
-        warn = match.group(1)
-    else:
-        warn = 'No_warning'
-    # Chimeras with 2 unmatched features
-    if chimID == 'N/A---N/A':
-        noFeat.append((chimClass,spR,spP,warn,chr1,end1,strand1,chr2,start2,strand2))
-        continue
-    # Commands executed only the first time the chimera is met
-    if not chim.has_key(chimID):
-        chim[chimID] = {}
-        chim[chimID]['spR'] = 0
+with open(glob.glob(os.getcwd()+'/../*.chimCT.txt')[0],'r') as input:
+    for line in input:
+        if line.startswith('#'):
+            continue
+        # Catching line information
+        (chimID,chr1,end1,strand1,chr2,start2,strand2) = (line.split('\t')[1:8])
+        (chimClass,warnings) = (line.split('\t')[11:13])
+        spR = re.match(r'Nb_spanning_reads=(.*)',line.split('\t')[21]).group(1)
         if options.single_end == False:
-            chim[chimID]['spP'] = 0
+            spP = re.match(r'Nb_spanning_PE=(.*)',line.rstrip().split('\t')[22]).group(1)
         else:
             spP = 'NA'
-        chim[chimID]['class'] = chimClass
-        chim[chimID]['breakpoint'] = []
-        chim[chimID]['warnings'] = []
-    # Commands executed for each processed line
-    chim[chimID]['spR'] += int(spR)
-    if options.single_end == False:
-        chim[chimID]['spP'] += int(spP)
-    chim[chimID]['warnings'].append(warn)
-    chim[chimID]['breakpoint'].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
-
-input.close()
+        if chimClass == '4':
+            continue
+        match = re.match(r'FusionDistance=([^,]*)',warnings)
+        if match:
+            warn = match.group(1)
+        else:
+            warn = 'No_warning'
+        # Chimeras with 2 unmatched features
+        if chimID == 'N/A---N/A':
+            noFeat.append((chimClass,spR,spP,warn,chr1,end1,strand1,chr2,start2,strand2))
+            continue
+        # Commands executed only the first time the chimera is met
+        if not chim.has_key(chimID):
+            chim[chimID] = {}
+            chim[chimID]['spR'] = 0
+            if options.single_end == False:
+                chim[chimID]['spP'] = 0
+            else:
+                spP = 'NA'
+            chim[chimID]['class'] = chimClass
+            chim[chimID]['breakpoint'] = []
+            chim[chimID]['warnings'] = []
+        # Commands executed for each processed line
+        chim[chimID]['spR'] += int(spR)
+        if options.single_end == False:
+            chim[chimID]['spP'] += int(spP)
+        chim[chimID]['warnings'].append(warn)
+        chim[chimID]['breakpoint'].append((chr1,end1,strand1,chr2,start2,strand2,spR,spP))
 
 # Opening output files (permissi
 noFeat_file = open(options.sample_name+'.noFeat.xls','w')
@@ -232,5 +215,5 @@ monoFeat_file.close()
 twoFeat_file.close()
 
 # Creating symbolic links to the spanning split reads fasta file and to the CRAC output directory of the analyse
-os.symlink(options.input+'/'+options.sample_name+'.fa',options.sample_name+'.fa')
+os.symlink(os.path.abspath(os.getcwd()+'/../'+options.sample_name+'.fa'),options.sample_name+'.fa')
 os.symlink(options.crac_dir,'link_to_BAM_files_directory.ln')

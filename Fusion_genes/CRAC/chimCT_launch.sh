@@ -5,7 +5,7 @@
 # Mathieu Bahin, 15/04/14
 
 # Template command to launch the script
-#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -i pairs.bam -n LUPA13 -r
+#qsub ~/Fusion_genes/CRAC/launch_chimCT.sh -c <CRAC_output_path> -n <sample_name>
 
 # Configuring the environment
 . /local/env/envsamtools.sh
@@ -16,26 +16,28 @@ chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
 # Getting options back
 stranded=FALSE
 keep_ig=FALSE
+single_end=FALSE
 conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
-while getopts "g:i:n:tkc:" OPTION
+while getopts "c:n:sktg:c:" OPTION
 do
 	case $OPTION in
-    	g) gff=$OPTARG;;
-    	i) input=$OPTARG;;
+    	c) crac_dir=$OPTARG;;
     	n) sample_name=$OPTARG;;
-    	t) stranded=TRUE;;
+    	s) stranded=TRUE;;
     	k) keep_ig=TRUE;;
+    	t) single_end=TRUE;;
+    	g) gff=$OPTARG;;
     	c) conf=$OPTARG;;
     esac
 done
 
 # Checking parameters
-if [[ -z $input || -z $sample_name ]]; then
-	echo "Input BAM/SAM file (option '-i') and sample name (option '-n') are mandatory. Please provide them. Aborting."
+if [[ -z $crac_dir || -z $sample_name ]]; then
+	echo "Input CRAC output directory (option '-c') and sample name (option '-n') are mandatory. Please provide them. Aborting."
 	exit 1
 fi
-if [[ ! ("$input" =~ ^/) ]]; then
-	echo "The input BAM/SAM file path must be absolute. Aborting."
+if [[ ! ("$crac_dir" =~ ^/) ]]; then
+	echo "The input CRAC output directory path must be absolute. Aborting."
 	exit 1
 fi
 directory=${sample_name}_chimCT.dir
@@ -48,12 +50,19 @@ else
 fi
 
 # Command building
-command="$chimCT -s $input -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
+command="$chimCT -s $crac_dir/pairs.bam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
 
 if [[ "$keep_ig" == TRUE ]]; then
 	command=$command' --keep-ig'
 fi
 
-# Executing command
+# Executing chimCT command
 $command > ${sample_name}.chimCT.txt
 # To get the standard error output (processing steps) to debug: $command > ${sample_name}.chimCT.txt 2> stderr.log
+
+# Processing chimCT output
+if [[ "$single_end" == FALSE ]]; then
+	~/process_chimCT_output.py -n $sample_name -c $crac_dir
+else
+	~/process_chimCT_output.py -n $sample_name -c $crac_dir -s
+fi
