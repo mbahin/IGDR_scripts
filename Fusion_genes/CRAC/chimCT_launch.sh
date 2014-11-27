@@ -15,16 +15,14 @@ chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
 
 # Getting options back
 stranded=FALSE
-keep_ig=FALSE
 single_end=FALSE
 conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
-while getopts "c:n:sktg:c:" OPTION
+while getopts "c:n:stg:c:" OPTION
 do
 	case $OPTION in
     	c) crac_dir=$OPTARG;;
     	n) sample_name=$OPTARG;;
     	s) stranded=TRUE;;
-    	k) keep_ig=TRUE;;
     	t) single_end=TRUE;;
     	g) gff=$OPTARG;;
     	c) conf=$OPTARG;;
@@ -51,10 +49,6 @@ fi
 
 # Command building
 command="$chimCT -s $crac_dir/pairs.bam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
-
-if [[ "$keep_ig" == TRUE ]]; then
-	command=$command' --keep-ig'
-fi
 
 # Executing chimCT command
 $command > ${sample_name}.chimCT.txt
