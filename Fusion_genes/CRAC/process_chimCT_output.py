@@ -6,7 +6,7 @@
 # The input is the directory where the results of chimCT were stored and the sample name.
 # Outputs are the 4 file describing the chimeras and the spanning reads fasta file.
 
-import argparse, sys, shutil, re, os, glob
+import argparse, sys, shutil, re, os, glob, stat
 from collections import OrderedDict
 
 # Getting the functions from 'classics.py' and the RLOCs and ENSCAFGs indexes
@@ -170,11 +170,15 @@ for line in input:
 
 input.close()
 
-# Opening output files
+# Opening output files (permissi
 noFeat_file = open(options.sample_name+'.noFeat.xls','w')
+os.chmod(noFeat_file.name, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 oneFeat_file = open(options.sample_name+'.oneFeat.xls','w')
+os.chmod(oneFeat_file.name, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 monoFeat_file = open(options.sample_name+'.monoFeat.xls','w')
+os.chmod(monoFeat_file.name, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 twoFeat_file = open(options.sample_name+'.twoFeat.xls','w')
+os.chmod(twoFeat_file.name, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
 # Writing the file for chimera with 2 unmatched parts
 noFeat_file.write('\t'.join(('nb spanning reads','nb spanning PE','class','chr1:pos1,strand1','chr2:pos2,strand2','warning'))+'\n')
