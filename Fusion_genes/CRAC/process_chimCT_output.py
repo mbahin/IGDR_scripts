@@ -18,8 +18,8 @@ sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
 
 # Getting options back
 parser = argparse.ArgumentParser()
-parser.add_argument('-n', dest='sample_name')
-parser.add_argument('-c', dest='crac_dir')
+parser.add_argument('-n', dest='sample_name', required=True)
+parser.add_argument('-c', dest='crac_dir', required=True)
 parser.add_argument('-s', dest='single_end', action='store_true')
 options = parser.parse_args()
 options.crac_dir = options.crac_dir.rstrip('/')
