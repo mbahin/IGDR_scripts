@@ -56,7 +56,7 @@ $command > ${sample_name}.chimCT.txt
 
 # Processing chimCT output
 if [[ "$single_end" == FALSE ]]; then
-	~/process_chimCT_output.py -n $sample_name -c $crac_dir
+	~mbahin/Fusion_genes/CRAC/process_chimCT_output.py -n $sample_name -c $crac_dir
 else
-	~/process_chimCT_output.py -n $sample_name -c $crac_dir -s
+	~mbahin/Fusion_genes/CRAC/process_chimCT_output.py -n $sample_name -c $crac_dir -s
 fi
