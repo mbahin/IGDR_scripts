@@ -125,7 +125,7 @@ for filename in $(ls); do
 done
 
 for filename in $(ls); do
-	if [[ $filename != ${filename#$suffix} ]]; then
+	if [[ $filename != ${filename%$suffix} ]]; then
 		mv $filename ${filename%$suffix}
 		sed -i "s/$filename/${filename%$suffix}/g" ../metadata.csv
 	fi
