@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+# -q sgi144g.q
 #$ -q sgi512g.q
 #$ -M mbahin@univ-rennes1.fr
 #$ -m bea
 #$ -cwd
 #$ -pe mpichtc 5
+# -pe make 5
 
 # Mathieu Bahin, 10/02/14
 
@@ -12,10 +14,6 @@
 
 # Template command to launch the script
 # qsub ~/Fusion_genes/CRAC/CRAC_launch.sh -r $(pwd)/GIGA-HYS-2012_T01_ROTW_R1.trim.fastq.gz -s $(pwd)/GIGA-HYS-2012_T01_ROTW_R2.trim.fastq.gz -t 5
-# To work on multi-threads
-# -pe mpichtc 5
-# -pe make 5
-# -q sgi144g.q
 
 # Sourcing python environment
 . /local/env/envcrac-1.5.0.sh
@@ -66,7 +64,6 @@ fi
 if [[ ! -d "$rep.dir" ]]; then
 	mkdir $rep.dir
 	cd $rep.dir
-	exit 1
 else
 	echo "Directory $rep already exists. Aborting."
 	exit 1
@@ -106,10 +103,27 @@ if [[ -n "$threads" ]]; then
 fi
 command=$command" -o- --summary summary.output"
 echo -e "\nOriginal command line:\n$command" >> file.log
-$command | samtools view -Sbh - > $output
+$command | samtools view -@ $threads -Sbh - > $output
 
 # Creating the sorted BAM and index file without secondary and supplementary alignments (used by the script to get the paired-end reads around a breakpoint)
-samtools view -hb -F 0x800 -F 0x100 $output > pairs.clean.bam
-samtools sort -o pairs.clean.bam sorting > pairs.clean.sort.bam
+samtools view -@ $threads -hb -F 0x800 -F 0x100 $output > pairs.clean.bam
+samtools sort -@ $threads -o pairs.clean.bam sorting > pairs.clean.sort.bam
 rm pairs.clean.bam
 samtools index pairs.clean.sort.bam
+
+# Checking the results (produced BAM line count almost half the input FASTQ line count)
+nb_bam=$(samtools view -c $output)
+nb_fastq=$(zcat $reads1 | wc -l)
+check=$(echo "$nb_fastq/$nb_bam" | bc -l)
+echo -e "\n\nFile sizes:\n\t$output: $nb_bam\n\t$reads1: $nb_fastq\n\tCheck test (should be greater than 1.9): $check" >> file.log
+if [[ -n "$reads2" ]]; then
+	if [[ $(echo "$check <= 1.9" | bc -l) -eq 1 ]]; then
+		echo -e "\nWarning: Check failed !!" >> file.log
+		echo "Warning: File sizes check failed !!"
+	fi
+else
+	if [[ $(echo "$check <= 1.9" | bc -l) -eq 1 ]]; then
+		echo -e "\nWarning: Check failed !!" >> file.log
+		echo "Warning: File sizes check failed !!"
+	fi
+fi
