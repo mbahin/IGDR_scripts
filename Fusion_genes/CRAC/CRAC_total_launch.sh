@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# -q sgi144g.q
 #$ -q sgi512g.q
+# -q sgi144g.q
 #$ -M mbahin@univ-rennes1.fr
 #$ -m bea
 #$ -cwd
@@ -22,7 +22,6 @@
 # Getting options back
 index=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/Index/dogIndex
 kmer=22
-output=pairs.bam
 stringent_chimera=FALSE
 noAmbiguity=FALSE
 stranded=FALSE;
@@ -72,18 +71,16 @@ fi
 
 # Printing script metadata
 log=file.log
-echo -e "Date: "$(date)"\n" > file.log
-echo -e "Index:\n$index" >> file.log
-echo -e "\nRead file (R1):\n$reads1" >> file.log
+echo -e "Date: "$(date)"\n" > $log
+echo -e "Index:\n$index" >> $log
+echo -e "\nRead file (R1):\n$reads1" >> $log
 if [[ -n "$reads2" ]]; then
-	echo -e "Read file (R2):\n$reads2" >> file.log
+	echo -e "Read file (R2):\n$reads2" >> $log
 fi
 
 # Building and launching the command
+output=pairs.bam
 command="crac -i $index -k $kmer -r $reads1"
-#if [[ "$paired_end" == TRUE ]]; then
-#	command=$command" $reads2 --paired-end-chimera pe.chimera.output"
-#fi
 if [[ -n "$reads2" ]]; then
 	command=$command" $reads2"
 fi
@@ -103,7 +100,7 @@ if [[ -n "$threads" ]]; then
 	command=$command" --nb-threads $threads"
 fi
 command=$command" -o- --summary summary.output"
-echo -e "\nOriginal command line:\n$command" >> file.log
+echo -e "\nOriginal command line:\n$command" >> $log
 $command | samtools view -@ $threads -Sbh - > $output
 
 # Creating the sorted BAM and index file without secondary and supplementary alignments (used by the script to get the paired-end reads around a breakpoint)
