@@ -47,6 +47,11 @@ else
 	cd $directory
 fi
 
+# Printing script metadata
+log=file.log
+echo -e "Date: "$(date)"\n" > $log
+echo -e "GFF file: "$(grep ^ANNOTATION_GFF $conf | sed "s/ANNOTATION_GFF '\(.*\)'/\1/g") > $log
+
 # Command building
 command="$chimCT -s $crac_dir/pairs.bam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
 
