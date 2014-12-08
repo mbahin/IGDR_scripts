@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# -q sgi144g.q
 #$ -q sgi512g.q
+# -q sgi144g.q
 #$ -M mbahin@univ-rennes1.fr
 #$ -m bea
 #$ -cwd
@@ -22,11 +22,11 @@
 # Getting options back
 index=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/Index/dogIndex
 kmer=22
-output=pairs.bam
 stringent_chimera=FALSE
 noAmbiguity=FALSE
 stranded=FALSE;
 detailed_sam=FALSE
+threads=1
 while getopts "i:k:r:s:unvdt:" OPTION
 do
 	case $OPTION in
@@ -79,10 +79,8 @@ if [[ -n "$reads2" ]]; then
 fi
 
 # Building and launching the command
+output=pairs.bam
 command="crac -i $index -k $kmer -r $reads1"
-#if [[ "$paired_end" == TRUE ]]; then
-#	command=$command" $reads2 --paired-end-chimera pe.chimera.output"
-#fi
 if [[ -n "$reads2" ]]; then
 	command=$command" $reads2"
 fi
