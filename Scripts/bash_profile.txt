@@ -46,17 +46,18 @@ export GFF='/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAn
 . /local/env/envgit-1.7.5.sh
 . /local/env/envcrac-1.5.0.sh
 . /local/env/envbedtools-2.19.0.sh
-#. /local/env/envbowtie-2.2.3.sh
 . /local/env/envbowtie-1.0.0.sh
 . /local/env/envblat.sh
 . /local/env/envgmap.sh
 
 # Perl Lib directory
-PERL5LIB=$HOME/perl
-PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5
-PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/bin/perl/lib
-PERL5LIB=${PERL5LIB}:/home/genouest/umr6061/recomgen/tderrien/src/bioperl-1.2.3
-PERL5LIB=${PERL5LIB}:/home/genouest/genouest/mbahin/Fusion_genes/defuse-0.6.2/scripts
+PERL5LIB=/home/genouest/genouest/mbahin/perl
+PERL5LIB=$PERL5LIB:/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/lib/perl5
+PERL5LIB=$PERL5LIB:/home/genouest/umr6061/recomgen/tderrien/bin/perl/lib
+PERL5LIB=$PERL5LIB:/home/genouest/umr6061/recomgen/tderrien/src/bioperl-1.2.3
+PERL5LIB=$PERL5LIB:/home/genouest/genouest/mbahin/Fusion_genes/defuse-0.6.2/scripts
+PERL5LIB=$PERL5LIB:/home/genouest/umr6061/recomgen/tderrien/libperl/Parallel-ForkManager-1.06/lib/
+PERL5LIB=$PERL5LIB:/local/perl/5.18.2/lib/site_perl/5.18.2/
 export PERL5LIB
 
 # Export lang
