@@ -9,7 +9,7 @@
 
 # Configuring the environment
 . /local/env/envsamtools.sh
-PERL5LIB=${PERL5LIB}:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5
+PERL5LIB=$PERL5LIB:$HOME/Fusion_genes/CRAC/chimCT/lib/perl5
 export PERL5LIB
 chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
 
@@ -17,16 +17,16 @@ chimCT=/home/genouest/genouest/mbahin/Fusion_genes/CRAC/chimCT/bin/chimCT
 stranded=FALSE
 single_end=FALSE
 conf='/home/genouest/genouest/mbahin/Fusion_genes/CRAC/CracTools.cfg'
-while getopts "c:n:stg:c:" OPTION
+while getopts "d:c:n:stg:" OPTION
 do
 	case $OPTION in
-    	c) crac_dir=$OPTARG;;
-    	n) sample_name=$OPTARG;;
-    	s) stranded=TRUE;;
-    	t) single_end=TRUE;;
-    	g) gff=$OPTARG;;
-    	c) conf=$OPTARG;;
-    esac
+		d) output_dir=$OPTARG;;
+		c) crac_dir=$OPTARG;;
+		n) sample_name=$OPTARG;;
+		s) stranded=TRUE;;
+		t) single_end=TRUE;;
+		g) gff=$OPTARG;;
+	esac
 done
 
 # Checking parameters
@@ -38,7 +38,13 @@ if [[ ! ("$crac_dir" =~ ^/) ]]; then
 	echo "The input CRAC output directory path must be absolute. Aborting."
 	exit 1
 fi
-directory=${sample_name}_chimCT.dir
+
+# Creating the output directory
+if [[ -n $output_dir ]]; then
+	directory=$output_dir
+else
+	directory=${sample_name}_chimCT.dir
+fi
 if [[ -d "$directory" ]]; then
 	echo "Directory $directory already exists. Aborting."
 	exit 1
@@ -50,9 +56,14 @@ fi
 # Printing script metadata
 log=file.log
 echo -e "Date: "$(date)"\n" > $log
-echo -e "GFF file: "$(grep ^ANNOTATION_GFF $conf | sed "s/ANNOTATION_GFF '\(.*\)'/\1/g") > $log
+if [[ -n $gff ]]; then
+	echo -e "GFF file: $gff" >> $log
+else
+	echo -e "GFF file: "$(grep ^ANNOTATION_GFF $conf | sed "s/ANNOTATION_GFF '\(.*\)'/\1/g") >> $log
+fi
 
 # Command building
+echo -e "\nOriginal command line:\n$command" >> $log
 command="$chimCT -s $crac_dir/pairs.bam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
 
 # Executing chimCT command

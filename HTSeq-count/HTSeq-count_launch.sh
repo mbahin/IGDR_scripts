@@ -1,5 +1,5 @@
-# -M mbahin@univ-rennes1.fr
-# -m bea
+#$ -M mbahin@univ-rennes1.fr
+#$ -m bea
 #$ -cwd
 
 # Template command to launch the script
