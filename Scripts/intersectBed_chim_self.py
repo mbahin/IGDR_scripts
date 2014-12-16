@@ -2,16 +2,35 @@
 
 # Mathieu Bahin, 22/07/14
 
-import argparse, os
-from subprocess import *
+import argparse, os, subprocess
 
 # Getting options back
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', dest='chimCT', required=True)
 options = parser.parse_args()
 
+###### Functions
+
+def process_intersectBed_line(line):
+    ##### WARNING
+    # Function to get the fasta file of the reads with one mate in the first interest region and the other in the second one.
+    # The parameter indicate wether the operation is done in the sense or the reverse sense.
+    #####
+
+    if line.split('\t')[-1] != '0':
+        rloc_new = line.split('\t')[14].split('"')[1]
+        #tcpt = line.split('\t')[14].split('"')[3]
+        tcpt_id = re.match(r'(.*)_([2-9]|[1-9][0-9]+)$',line.split('\t')[14].split('"')[3]
+            if tcpt_id:
+                tcpt_new = tcpt_id.group(1)
+            else:
+                tcpt_new = line.split('\t')[14].split('"')[3]
+
+##### Functions end
+
 #GTF = '/home/genouest/umr6061/recomgen/tderrien/DATA/canFam3/annotation/MasterAnnotation/BROADmRNA_lncRNA_antis.Ens75.gtfclean.mEns75.07-24-2014.gtf'
-GTF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf'
+#GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gff'
+GFF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf'
 
 # Processing the input file lines
 chimCT_file = open(options.chimCT,'r')
@@ -36,13 +55,14 @@ for line in chimCT_file:
     # Intersecting with the reference file
     enscafg_list = []
     print 'First part'
-    for line in Popen('intersectBed -a bkpt.bed -b '+GTF+' -wao', shell=True, stdout=PIPE).stdout:
+    for line in subprocess.Popen('intersectBed -a bkpt.bed -b '+GFF+' -wao', shell=True, stdout=subprocess.PIPE).stdout:
         print line.rstrip()
-        if line.rstrip().split('\t')[-1] != '0':
-            if line.split('\t')[14].split('"')[5] != 'NA':
-                enscafg_list.append(line.split('\t')[14].split('"')[5])
-            else:
-                enscafg_list.append(line.split('\t')[14].split('"')[3])
+        if (line.rstrip().split('\t')[-1] != '0') or (line.split('\t')[8] != 'mRNA'):
+            enscafg_list.append(line.split('\t')[14].split(';')[0].split('=')[1])
+            #if line.split('\t')[14].split(';')[0].split('=')[1] != 'NA':
+                #enscafg_list.append(line.split('\t')[14].split('"')[5])
+            #else:
+                #enscafg_list.append(line.split('\t')[14].split('"')[3])
     if not index.has_key(chimID):
         index[chimID] = {}
     index[chimID]['first'] = enscafg_list
@@ -55,7 +75,7 @@ for line in chimCT_file:
     # Intersecting with the reference file
     enscafg_list = []
     print 'Second part'
-    for line in Popen('intersectBed -a bkpt.bed -b '+GTF+' -wao', shell=True, stdout=PIPE).stdout:
+    for line in subprocess.Popen('intersectBed -a bkpt.bed -b '+GFF+' -wao', shell=True, stdout=subprocess.PIPE).stdout:
         print line.rstrip()
         if line.rstrip().split('\t')[-1] != '0':
             if line.split('\t')[14].split('"')[5] != 'NA':
