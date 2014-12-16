@@ -176,4 +176,4 @@ fi
 echo "Done."
 
 # Cleaning
-rm -r Counts metadata.csv
+rm -r Counts
