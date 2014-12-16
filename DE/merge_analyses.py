@@ -31,6 +31,11 @@ with open(options.DESeq2_file,'r') as DESeq2_file:
     DESeq2_file.readline()
     for line in DESeq2_file:
         xloc = line.split(',')[0].split('"')[1]
+        
+        # If the count is in ENSCAFGs (and not in RLOCs), transforming the ENSCAFG into its RLOC
+        if xloc.startswith('ENSCAFG'):
+            xloc = ENSCAFGs[xloc]['RLOC']
+
         if not results.has_key(xloc):
             results[xloc] = {}
         results[xloc]['DESeq2_score'] = line.rstrip().split(',')[-1]
@@ -46,6 +51,11 @@ with open(options.edgeR_file,'r') as edgeR_file:
     edgeR_file.readline()
     for line in edgeR_file:
         xloc = line.split(',')[0].split('"')[1]
+        
+        # If the count is in ENSCAFGs (and not in RLOCs), transforming the ENSCAFG into its RLOC
+        if xloc.startswith('ENSCAFG'):
+            xloc = ENSCAFGs[xloc]['RLOC']
+
         if not results.has_key(xloc):
             results[xloc] = {}
         results[xloc]['edgeR_score'] = line.rstrip().split(',')[-1]
