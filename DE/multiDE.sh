@@ -6,10 +6,6 @@
 . /local/env/envR-3.1.0.sh
 
 # Config
-#DESeq2_launch='/home/genouest/umr6061/recomgen/dog/mbahin/DE/scripts/DESeq2_launch.r'
-#edgeR_launch='/home/genouest/umr6061/recomgen/dog/mbahin/DE/scripts/edgeR_launch.r'
-#merge_analyses_script='/home/genouest/umr6061/recomgen/dog/mbahin/DE/scripts/merge_analyses.py'
-#create_Venn='/home/genouest/umr6061/recomgen/dog/mbahin/DE/scripts/create_Venn.r'
 DESeq2_launch='/home/genouest/genouest/mbahin/DE/DESeq2_launch.r'
 edgeR_launch='/home/genouest/genouest/mbahin/DE/edgeR_launch.r'
 merge_analyses_script='/home/genouest/genouest/mbahin/DE/merge_analyses.py'
@@ -18,18 +14,18 @@ create_Venn='/home/genouest/genouest/mbahin/DE/create_Venn.r'
 # Getting options back
 mode='de'
 directory='multiDE'
-paired_design=FALSE
+second_factor=FALSE
 glm=FALSE
 htsfilter=FALSE
 threshold=0.05
-while getopts "m:d:c:t:pgh" OPTION
+while getopts "m:d:c:t:sgh" OPTION
 do
 	case $OPTION in
     	m) mode=$OPTARG;;
     	d) directory=$OPTARG;;
     	c) metadata=$OPTARG;;
     	t) threshold=$OPTARG;;
-    	p) paired_design=TRUE;;
+	s) second_factor=TRUE;;
     	g) glm=TRUE;;
     	h) htsfilter=TRUE;;
     esac
@@ -53,20 +49,18 @@ if [[ ! ("$threshold" =~ 0.[0-9]*) ]]; then
 	echo "The threshold must be numeric. Aborting."
 	exit 1
 fi
-if [[ ("$paired_design" == TRUE) && ("$mode" =~ 'e') && ("$glm" == FALSE) ]]; then
-	echo "Paired mode and edgeR analysis were chosen but GLM approach wasn't. Aborting."
-	exit 1
+if [[ ("$second_factor" == TRUE) && ("$mode" =~ 'e') && ("$glm" == FALSE) ]]; then
+	echo "Warning: Second factor (paired design ?) mode and edgeR analysis were chosen but GLM approach wasn't."
 fi
 if [[ -n $(awk -F, 'NR>1 && NF<2' $metadata) ]]; then
 	echo "At least one line in the factor file, beside the header, doesn't have the 2 minimum fields (filename and condition). Aborting."
 fi
-if [[ (-n $(awk -F, 'NR>1 && NF<3' $metadata)) && ("$paired_design" == TRUE) ]]; then
-	echo "Paired mode chosen but pairing information are not properly found in the factor file. Aborting."
+if [[ (-n $(awk -F, 'NR>1 && NF<3' $metadata)) && ("$second_factor" == TRUE) ]]; then
+	echo "Second factor mode chosen but information are not properly found in the factor file. Aborting."
 	exit 1
 fi
-if [[ ("$paired_design" == TRUE) && ("$htsfilter" == TRUE) ]]; then
-	echo "Warning: Paired mode and htsfilter chosen. HTSFilter need at least two replicates, it won't be used."
-	htsfilter=FALSE
+if [[ ("$second_factor" == TRUE) && ("$htsfilter" == TRUE) ]]; then
+	echo "Warning: Second factor mode (paired design ?) and htsfilter chosen. HTSFilter needs at least two replicates."
 fi
 
 if [[ -d "$directory" ]]; then
@@ -135,16 +129,13 @@ cd ..
 # Launching the DE analyses
 if [[ "$mode" =~ 'd' ]]; then
 	DESeq2_mode='DESeq2'
-	if [[ "$paired_design" == TRUE ]]; then
-		DESeq2_mode=$DESeq2_mode'_paired'
-	fi
 	if [[ "$htsfilter" == TRUE ]]; then
 		DESeq2_mode=$DESeq2_mode'_HTSF'
 	fi
 	echo "====== Launching a $DESeq2_mode analysis on the input data..."
 	mkdir $DESeq2_mode
 	cd $DESeq2_mode
-	Rscript $DESeq2_launch "../Counts" $htsfilter $paired_design
+	Rscript $DESeq2_launch "../Counts" $htsfilter $second_factor
 	cd ..
 fi
 if [[ "$mode" =~ 'e' ]]; then
@@ -152,16 +143,13 @@ if [[ "$mode" =~ 'e' ]]; then
 	if [[ "$glm" == TRUE ]]; then
 		edgeR_mode=$edgeR_mode'_GLM'
 	fi
-	if [[ "$paired_design" == TRUE ]]; then
-		edgeR_mode=$edgeR_mode'_paired'
-	fi
 	if [[ "$htsfilter" == TRUE ]]; then
 		edgeR_mode=$edgeR_mode'_HTSF'
 	fi
 	echo "===== Launching a $edgeR_mode analysis on the input data..."
 	mkdir $edgeR_mode
 	cd $edgeR_mode
-	Rscript $edgeR_launch "../Counts" $htsfilter $glm $paired_design
+	Rscript $edgeR_launch "../Counts" $htsfilter $glm $second_factor
 	cd ..
 fi
 
