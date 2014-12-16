@@ -5,7 +5,7 @@
 # Script to get the exon counts for 2 features (usually involved in a fusion).
 
 import argparse, os, sys, subprocess, glob
-from subprocess import Popen, PIPE
+#from subprocess import Popen, PIPE
 
 # Setting the environment
 GTF = '/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/MasterAnnotation/canfam3_cons_annot.gtf'
@@ -47,14 +47,17 @@ with open(small_GTF, 'w') as small_GTF_file:
         for line in GTF_file:
             if line.split('\t')[2] == "exon":
                 if line.split('\t')[8].split('"')[1]  == rloc1:
-                    exons.append('\t'.join(line.split('\t')[0:8])+'\tgene_id "'+options.feat1+'_'+str(i1)+'";')
+                    exons.append('\t'.join(line.split('\t')[0:8])+'\tgene_id "'+options.feat1+'_'+str(i1)+'"; transcript_id "'+options.feat1+'_'+str(i1)+'";')
                     i1 += 1
                 elif line.split('\t')[8].split('"')[1]  == rloc2 :
-                    exons.append('\t'.join(line.split('\t')[0:8])+'\tgene_id "'+options.feat2+'_'+str(i2)+'";')
+                    exons.append('\t'.join(line.split('\t')[0:8])+'\tgene_id "'+options.feat2+'_'+str(i2)+'"; transcript_id "'+options.feat2+'_'+str(i2)+'";')
                     i2 += 1
         exons = sorted(set(exons))
         for line in exons:
             small_GTF_file.write(line+'\n')
+            
+# Creating the fasta file corresponding to the exons from the GTF file
+os.system('~tderrien/bin/perl/script/FASTA/gtf2fasta.pl -infile '+small_GTF+' > '+rloc1+'-'+rloc2+'.fasta')
 
 # Launching HTSeq-count
 print 'Parallel executions of HTSeq-count...'
@@ -63,14 +66,14 @@ log_file.write('File(s) processed:\n')
 to_wait = []
 for f in glob.glob(options.samples):
     log_file.write(f+'\n')
-    #jobID = subprocess.Popen(['qsub', '-terse', '/home/genouest/genouest/mbahin/HTSeq-count/HTSeq-count_launch.sh', '-i', f, '-g', os.getcwd()+'/'+small_GTF, '-'+options.param], stdout=subprocess.PIPE).communicate()[0].rstrip()
-    jobID = Popen(['qsub', '-terse', '/home/genouest/genouest/mbahin/HTSeq-count/HTSeq-count_launch.sh', '-i', f, '-g', os.getcwd()+'/'+small_GTF, '-'+options.param], stdout=PIPE).communicate()[0].rstrip()
+    jobID = subprocess.Popen(['qsub', '-terse', '/home/genouest/genouest/mbahin/HTSeq-count/HTSeq-count_launch.sh', '-i', f, '-g', os.getcwd()+'/'+small_GTF, '-'+options.param], stdout=subprocess.PIPE).communicate()[0].rstrip()
+    #jobID = Popen(['qsub', '-terse', '/home/genouest/genouest/mbahin/HTSeq-count/HTSeq-count_launch.sh', '-i', f, '-g', os.getcwd()+'/'+small_GTF, '-'+options.param], stdout=PIPE).communicate()[0].rstrip()
     to_wait.append(jobID)
 log_file.close()
 
-# Wainting for the HTSeq-count to finish
-#subprocess.call('. /local/env/envpython-2.6.4.sh; export DRMAA_LIBRARY_PATH=/usr/local/sge/lib/lx24-amd64/libdrmaa.so; ~/Scripts/waiter.py '+' '.join(to_wait), stdout=subprocess.PIPE, shell=True)
-subprocess.call('. /local/env/envpython-2.6.4.sh; which python; export DRMAA_LIBRARY_PATH=/usr/local/sge/lib/lx24-amd64/libdrmaa.so; ~/Scripts/waiter.py '+' '.join(to_wait), stdout=PIPE, shell=True)
+# Waiting for the HTSeq-count to finish
+subprocess.call('. /local/env/envpython-2.6.4.sh; export DRMAA_LIBRARY_PATH=/usr/local/sge/lib/lx24-amd64/libdrmaa.so; ~/Scripts/waiter.py '+' '.join(to_wait), stdout=subprocess.PIPE, shell=True)
+#subprocess.call('. /local/env/envpython-2.6.4.sh; which python; export DRMAA_LIBRARY_PATH=/usr/local/sge/lib/lx24-amd64/libdrmaa.so; ~/Scripts/waiter.py '+' '.join(to_wait), stdout=PIPE, shell=True)
 
 # Join count files
 print 'Merging and formatting the results...'
