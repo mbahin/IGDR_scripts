@@ -96,7 +96,7 @@ if [[ "$format_bam" == TRUE ]]; then
 	fi
 else
 	if [[ "$already_sorted" == FALSE ]]; then
-		samtools sort -on $input sorting | samtools view - > file.sorted
+		samtools view -Sbh $input | samtools sort -on - sorting | samtools view -h - > file.sorted
 	fi
 fi
 
