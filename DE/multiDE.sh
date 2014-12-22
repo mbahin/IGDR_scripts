@@ -25,7 +25,7 @@ do
     	d) directory=$OPTARG;;
     	c) metadata=$OPTARG;;
     	t) threshold=$OPTARG;;
-	s) second_factor=TRUE;;
+		s) second_factor=TRUE;;
     	g) glm=TRUE;;
     	h) htsfilter=TRUE;;
     esac

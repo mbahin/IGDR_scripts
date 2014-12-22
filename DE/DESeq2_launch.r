@@ -61,7 +61,7 @@ head(res)
 
 # Writing results in a file
 print("Writing the output file...")
-write.csv(as.data.frame(res), file='file.output.csv')
+write.csv(as.data.frame(res), file='file.DESeq2.output.csv')
 
 # Producing labelled PCA plot
 print("Producing the labelled PCA plot... (PCA.png)")

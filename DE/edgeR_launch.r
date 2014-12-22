@@ -86,4 +86,4 @@ if (!glm) {
 print("Overview of the output:")
 print(topTags(et))
 print("Writing the output file...")
-write.csv(as.data.frame(topTags(et,n=dim(et$table)[1])), file='file.output.csv')
+write.csv(as.data.frame(topTags(et,n=dim(et$table)[1])), file='file.edgeR.output.csv')

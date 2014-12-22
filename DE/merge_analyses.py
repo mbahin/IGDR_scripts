@@ -21,7 +21,7 @@ sys.path.remove('/home/genouest/genouest/mbahin/Scripts')
 
 # Indexing the cancer gene list
 cancer_mutations = []
-with open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r') as cancer_mutation_file:
+with open('/home/genouest/umr6061/recomgen/dog/mbahin/references/mutation_gene_list.txt','r') as cancer_mutation_file:
     for line in cancer_mutation_file:
         cancer_mutations.append(line.split('\t')[0])
 
@@ -54,7 +54,7 @@ with open(options.edgeR_file,'r') as edgeR_file:
         
         # If the count is in ENSCAFGs (and not in RLOCs), transforming the ENSCAFG into its RLOC
         if xloc.startswith('ENSCAFG'):
-            xloc = ENSCAFGs[xloc]['RLOC']
+            xloc = ENSCAFGs[xloc]['RLOC']	
 
         if not results.has_key(xloc):
             results[xloc] = {}
