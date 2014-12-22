@@ -99,13 +99,13 @@ with open('/home/genouest/umr6061/recomgen/dog/data/canFam3/annotation/Correspon
 
 # Indexing the cancer mutation list
 mutations = []
-with open('/home/genouest/genouest/mbahin/Annotations/mutation_gene_list.txt','r') as mutation_file:
+with open('/home/genouest/umr6061/recomgen/dog/mbahin/references/mutation_gene_list.txt','r') as mutation_file:
     for line in mutation_file:
         mutations.append(line.split('\t')[0])
 
 # Indexing the cancer translocation list
 translocations = []
-with open('/home/genouest/genouest/mbahin/Annotations/translocation_gene_list.txt','r') as translocation_file:
+with open('/home/genouest/umr6061/recomgen/dog/mbahin/references/translocation_gene_list.txt','r') as translocation_file:
     for line in translocation_file:
         translocations.append(line.split('\t')[0])
 
