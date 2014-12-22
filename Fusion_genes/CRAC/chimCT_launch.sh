@@ -63,8 +63,8 @@ else
 fi
 
 # Command building
-echo -e "\nOriginal command line:\n$command" >> $log
 command="$chimCT -s $crac_dir/pairs.bam -n $sample_name --summary summary.txt --spanning-reads $sample_name --conf $conf"
+echo -e "\nOriginal command line:\n$command" >> $log
 
 # Executing chimCT command
 $command > ${sample_name}.chimCT.txt
